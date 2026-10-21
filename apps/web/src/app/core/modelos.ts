@@ -11,7 +11,7 @@ export interface Estilista {
   comision: number;
 }
 export type MedioPago = 'efectivo' | 'nequi';
-export type EstadoCita = 'pendiente' | 'confirmada' | 'atendida' | 'no-llego';
+export type EstadoCita = 'pendiente' | 'confirmada' | 'atendida' | 'no-llego' | 'cancelada';
 export interface Cita {
   id: string;
   clienta: string;
@@ -24,6 +24,10 @@ export interface Cita {
   abono: number;
   pago?: MedioPago;
   propina?: number;
+  /** Código que recibe la clienta (solo con API). */
+  codigo?: string;
+  /** Abono por Nequi esperando confirmación de la dueña (solo con API). */
+  abonoPendienteId?: string | null;
 }
 export interface Espera {
   id: string;
@@ -31,4 +35,9 @@ export interface Espera {
   telefono: string;
   servicioId: string;
   preferencia: string;
+}
+export interface Cupo {
+  hora: string;
+  /** Fecha-hora ISO del cupo (solo con API). */
+  inicio?: string;
 }

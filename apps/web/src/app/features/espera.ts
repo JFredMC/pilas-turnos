@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TurnosStore } from '../core/turnos.store';
 import { enlaceWhatsapp } from '../core/calculos';
@@ -55,33 +55,43 @@ import { enlaceWhatsapp } from '../core/calculos';
       <input id="et" name="et" [(ngModel)]="telefono" inputmode="tel" />
       <label for="es">Servicio</label>
       <select id="es" name="es" [(ngModel)]="servicioId">
-        @for (s of store.servicios; track s.id) {
+        @for (s of store.servicios(); track s.id) {
           <option [value]="s.id">{{ s.nombre }}</option>
         }
       </select>
       <label for="ep">Preferencia</label>
       <input id="ep" name="ep" [(ngModel)]="preferencia" placeholder="Ej.: mañana temprano" />
-      <button class="btn" type="submit" [disabled]="!nombre.trim()">Agregar a la lista</button>
+      <label class="check"
+        ><input type="checkbox" name="acepta" [(ngModel)]="acepta" required /> La clienta autorizó
+        guardar su nombre y celular (Ley 1581)</label
+      >
+      <button class="btn" type="submit" [disabled]="!nombre.trim() || !acepta">
+        Agregar a la lista
+      </button>
     </form>
   `,
 })
-export class EsperaPage {
+export class EsperaPage implements OnInit {
   protected readonly store = inject(TurnosStore);
   protected nombre = '';
   protected telefono = '';
-  protected servicioId = this.store.servicios[0].id;
+  protected servicioId = this.store.servicios()[0]?.id ?? '';
+  protected acepta = false;
+  ngOnInit() {
+    void this.store.cargarSalon();
+  }
   protected preferencia = '';
   libres() {
     return this.store.citas().filter((c) => c.estado === 'no-llego').length;
   }
   aviso(nombre: string, tel: string) {
     return enlaceWhatsapp(
-      `¡Hola ${nombre}! Se liberó un cupo hoy en Salón Ejemplo. ¿Lo quieres? Responde SÍ y te lo separamos.`,
+      `¡Hola ${nombre}! Se liberó un cupo hoy en ${this.store.salonNombre()}. ¿Lo quieres? Responde SÍ y te lo separamos.`,
       tel,
     );
   }
   agregar() {
-    if (!this.nombre.trim()) return;
+    if (!this.nombre.trim() || !this.acepta) return;
     this.store.agregarEspera({
       clienta: this.nombre.trim(),
       telefono: this.telefono,
@@ -89,5 +99,6 @@ export class EsperaPage {
       preferencia: this.preferencia || 'Cualquier hora',
     });
     this.nombre = this.telefono = this.preferencia = '';
+    this.acepta = false;
   }
 }

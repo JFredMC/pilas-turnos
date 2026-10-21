@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { TurnosStore } from '../core/turnos.store';
 import { formatoCop } from '../core/calculos';
 
@@ -45,11 +45,16 @@ import { formatoCop } from '../core/calculos';
       </section>
     }
     <p class="muted nota">
-      Cifras calculadas con las citas marcadas como "Atendida" en la agenda. Datos de ejemplo.
+      Cifras calculadas con las citas marcadas como "Atendida" en la agenda.{{
+        store.conApi ? '' : ' Datos de ejemplo.'
+      }}
     </p>
   `,
 })
-export class Caja {
+export class Caja implements OnInit {
+  ngOnInit() {
+    void this.store.cargarCaja();
+  }
   protected readonly store = inject(TurnosStore);
   protected readonly cop = formatoCop;
   protected readonly total = computed(() => {

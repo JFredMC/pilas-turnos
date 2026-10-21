@@ -24,7 +24,9 @@ export function horariosLibres(
   cierre: number,
 ): string[] {
   const ocupados = citas
-    .filter((c) => c.estilistaId === estilistaId && c.estado !== 'no-llego')
+    .filter(
+      (c) => c.estilistaId === estilistaId && c.estado !== 'no-llego' && c.estado !== 'cancelada',
+    )
     .map((c) => {
       const ini = aMinutos(c.hora);
       const dur = servicios.find((s) => s.id === c.servicioId)?.minutos ?? 30;

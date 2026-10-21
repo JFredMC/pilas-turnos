@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TurnosStore } from '../core/turnos.store';
 import { formatoCop } from '../core/calculos';
 import { EstadoCita } from '../core/modelos';
@@ -7,6 +7,9 @@ import { EstadoCita } from '../core/modelos';
   selector: 'app-agenda',
   template: `
     <h1>Agenda de hoy</h1>
+    @if (store.error()) {
+      <p class="aviso" role="alert">{{ store.error() }}</p>
+    }
     <div class="tabs" role="tablist" aria-label="Estilistas">
       <button
         role="tab"
@@ -16,7 +19,7 @@ import { EstadoCita } from '../core/modelos';
       >
         Todas
       </button>
-      @for (e of store.estilistas; track e.id) {
+      @for (e of store.estilistas(); track e.id) {
         <button
           role="tab"
           type="button"
@@ -55,7 +58,18 @@ import { EstadoCita } from '../core/modelos';
                   <option value="confirmada">Confirmada</option>
                   <option value="atendida">Atendida</option>
                   <option value="no-llego">No llegó</option>
+                  <option value="cancelada">Cancelada</option>
                 </select>
+                @if (c.abonoPendienteId) {
+                  <button
+                    type="button"
+                    class="btn sm"
+                    (click)="store.confirmarAbono(c.abonoPendienteId)"
+                    [attr.aria-label]="'Confirmar abono de ' + c.clienta"
+                  >
+                    Abono llegó
+                  </button>
+                }
               </li>
             }
           </ul>
@@ -66,12 +80,16 @@ import { EstadoCita } from '../core/modelos';
     }
   `,
 })
-export class Agenda {
+export class Agenda implements OnInit {
+  ngOnInit() {
+    void this.store.cargarSalon();
+  }
   protected readonly store = inject(TurnosStore);
   protected readonly cop = formatoCop;
   protected readonly filtro = signal<string>('todas');
   protected readonly grupos = computed(() =>
-    this.store.estilistas
+    this.store
+      .estilistas()
       .filter((e) => this.filtro() === 'todas' || this.filtro() === e.id)
       .map((e) => ({
         estilista: e,

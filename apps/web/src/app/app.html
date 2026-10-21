@@ -39,9 +39,14 @@
         >
       </li>
     }
+    @if (store.conApi && store.logueado()) {
+      <li><button type="button" class="ghost" (click)="salir()">Salir</button></li>
+    }
   </ul>
 </nav>
-<p class="banda" role="note">Prototipo con datos de ejemplo · sin backend</p>
+@if (!store.conApi) {
+  <p class="banda" role="note">Prototipo con datos de ejemplo · sin backend</p>
+}
 <main id="contenido" tabindex="-1">
   <router-outlet />
 </main>

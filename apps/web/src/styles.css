@@ -414,7 +414,8 @@ select {
   cursor: pointer;
   white-space: nowrap;
 }
-.tabs button[aria-selected='true'] {
+.tabs button[aria-selected='true'],
+.tabs button[aria-pressed='true'] {
   background: var(--brand);
   color: var(--brand-ink);
   border-color: var(--brand);
