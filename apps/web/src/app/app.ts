@@ -23,10 +23,11 @@ export class App {
     this.menu.set(false);
     void this.router.navigateByUrl('/salon/ingresar');
   }
-  protected readonly enlaces = [
+  protected readonly enlaces: { ruta: string; texto: string; soloDuena?: boolean }[] = [
     { ruta: '/', texto: 'Reservar (clienta)' },
     { ruta: '/salon/agenda', texto: 'Agenda' },
     { ruta: '/salon/espera', texto: 'Lista de espera' },
     { ruta: '/salon/caja', texto: 'Cuadre de caja' },
+    { ruta: '/salon/configuracion', texto: 'Configuración', soloDuena: true },
   ];
 }

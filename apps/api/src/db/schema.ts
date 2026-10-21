@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   check,
   date,
   index,
@@ -39,6 +40,12 @@ export const salones = pgTable('salones', {
   telefono: text('telefono'),
   /** Abono en pesos que se pide al reservar (0 = sin abono). */
   abonoCop: integer('abono_cop').notNull().default(0),
+  /** ¿Se pide abono al reservar? (el monto es abonoCop). */
+  abonoActivo: boolean('abono_activo').notNull().default(true),
+  /** WhatsApp del salón para que las clientas escriban. */
+  whatsapp: text('whatsapp'),
+  /** Número de Nequi donde se reciben los abonos. */
+  nequiNumero: text('nequi_numero'),
   creadoEn: creado(),
 });
 
@@ -69,6 +76,10 @@ export const usuarios = pgTable(
     nombre: text('nombre').notNull(),
     rol: rolEnum('rol').notNull(),
     estilistaId: uuid('estilista_id').references(() => estilistas.id, { onDelete: 'set null' }),
+    /** Contraseña temporal: debe cambiarla en el primer ingreso. */
+    debeCambiarPassword: boolean('debe_cambiar_password').notNull().default(false),
+    /** Sube con cada cambio de contraseña: invalida los tokens anteriores. */
+    passwordVersion: integer('password_version').notNull().default(1),
     creadoEn: creado(),
   },
   (t) => [uniqueIndex('usuarios_email_uq').on(sql`lower(${t.email})`)],
@@ -208,4 +219,45 @@ export const cierresCaja = pgTable(
     creadoEn: creado(),
   },
   (t) => [uniqueIndex('cierre_dia_uq').on(t.salonId, t.estilistaId, t.fecha)],
+);
+
+/** Excepciones al horario semanal: días libres, festivos o un horario distinto ese día. */
+export const excepcionesHorario = pgTable(
+  'excepciones_horario',
+  {
+    id: id(),
+    salonId: salonRef(),
+    /** null = aplica a todo el salón (p. ej. festivo). */
+    estilistaId: uuid('estilista_id').references(() => estilistas.id, { onDelete: 'cascade' }),
+    fecha: date('fecha').notNull(),
+    /** true = no se atiende ese día; false = se atiende en abreMin–cierraMin. */
+    cerrado: boolean('cerrado').notNull().default(true),
+    abreMin: integer('abre_min'),
+    cierraMin: integer('cierra_min'),
+    motivo: text('motivo'),
+    creadoEn: creado(),
+  },
+  (t) => [
+    index('excepciones_salon_fecha_idx').on(t.salonId, t.fecha),
+    check(
+      'excepcion_horas',
+      sql`${t.cerrado} or (${t.abreMin} is not null and ${t.cierraMin} is not null and ${t.abreMin} < ${t.cierraMin})`,
+    ),
+  ],
+);
+
+/** Enlaces de recuperación de contraseña: solo se guarda el hash del token, de un solo uso. */
+export const recuperaciones = pgTable(
+  'recuperaciones',
+  {
+    id: id(),
+    usuarioId: uuid('usuario_id')
+      .notNull()
+      .references(() => usuarios.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull(),
+    expiraEn: timestamp('expira_en', { withTimezone: true }).notNull(),
+    usadoEn: timestamp('usado_en', { withTimezone: true }),
+    creadoEn: creado(),
+  },
+  (t) => [uniqueIndex('recuperaciones_token_uq').on(t.tokenHash)],
 );

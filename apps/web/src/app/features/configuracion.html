@@ -1,0 +1,486 @@
+<h1>Configuración</h1>
+
+@if (!conApi) {
+  <p class="aviso" role="note">
+    La configuración del salón necesita la API. En esta vista previa con datos de ejemplo no se
+    puede editar.
+  </p>
+} @else {
+  <div class="tabs" role="tablist" aria-label="Secciones de configuración">
+    @for (p of pestanas; track p.id) {
+      <button
+        role="tab"
+        type="button"
+        [id]="'tab-' + p.id"
+        [attr.aria-selected]="pestana() === p.id"
+        [attr.aria-controls]="'panel-' + p.id"
+        (click)="pestana.set(p.id)"
+      >
+        {{ p.texto }}
+      </button>
+    }
+  </div>
+
+  <div aria-live="polite">
+    @if (cfg.ok()) {
+      <p class="ok-msg" role="status">{{ cfg.ok() }}</p>
+    }
+    @if (cfg.error()) {
+      <p class="aviso" role="alert">{{ cfg.error() }}</p>
+    }
+    @if (cfg.cargando()) {
+      <p class="muted" role="status"><span class="spinner" aria-hidden="true"></span> Cargando…</p>
+    }
+  </div>
+
+  @switch (pestana()) {
+    @case ('salon') {
+      <form
+        class="card form"
+        id="panel-salon"
+        role="tabpanel"
+        aria-labelledby="tab-salon"
+        (ngSubmit)="guardarSalon()"
+      >
+        <h2>Datos del salón</h2>
+        <label for="s-nombre">Nombre</label>
+        <input id="s-nombre" name="nombre" [(ngModel)]="salon.nombre" required />
+        <label for="s-slug">Enlace de reservas</label>
+        <div class="prefijo">
+          <span aria-hidden="true">…/</span
+          ><input
+            id="s-slug"
+            name="slug"
+            [(ngModel)]="salon.slug"
+            required
+            pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            aria-describedby="s-slug-ayuda"
+          />
+        </div>
+        <small id="s-slug-ayuda" class="muted"
+          >Solo minúsculas, números y guiones. Si lo cambias, el enlace viejo deja de
+          funcionar.</small
+        >
+        <label for="s-ciudad">Ciudad</label>
+        <input id="s-ciudad" name="ciudad" [(ngModel)]="salon.ciudad" />
+        <label for="s-wa">WhatsApp del salón</label>
+        <input
+          id="s-wa"
+          name="whatsapp"
+          [(ngModel)]="salon.whatsapp"
+          inputmode="tel"
+          placeholder="300 000 0000"
+        />
+        <fieldset class="grupo">
+          <legend>Abono al reservar</legend>
+          <label class="check"
+            ><input type="checkbox" name="abonoActivo" [(ngModel)]="salon.abonoActivo" /> Pedir
+            abono por Nequi</label
+          >
+          @if (salon.abonoActivo) {
+            <label for="s-abono">Monto del abono (COP)</label>
+            <input
+              id="s-abono"
+              name="abonoCop"
+              type="number"
+              min="1000"
+              step="1000"
+              [(ngModel)]="salon.abonoCop"
+              inputmode="numeric"
+            />
+            <label for="s-nequi">Número de Nequi</label>
+            <input
+              id="s-nequi"
+              name="nequi"
+              [(ngModel)]="salon.nequiNumero"
+              inputmode="tel"
+              placeholder="300 000 0000"
+            />
+          }
+        </fieldset>
+        <button class="btn" type="submit">Guardar</button>
+      </form>
+    }
+
+    @case ('servicios') {
+      <section id="panel-servicios" role="tabpanel" aria-labelledby="tab-servicios">
+        <ul class="lista">
+          @for (s of cfg.servicios(); track s.id) {
+            <li class="card fila-col" [class.inactivo]="!s.activo">
+              @if (editandoServicio() === s.id) {
+                <form class="form" (ngSubmit)="guardarServicio(s.id)">
+                  <label [for]="'sv-n-' + s.id">Nombre</label>
+                  <input
+                    [id]="'sv-n-' + s.id"
+                    name="n"
+                    [(ngModel)]="edicionServicio.nombre"
+                    required
+                  />
+                  <div class="dos">
+                    <span
+                      ><label [for]="'sv-m-' + s.id">Minutos</label
+                      ><input
+                        [id]="'sv-m-' + s.id"
+                        name="m"
+                        type="number"
+                        min="10"
+                        step="5"
+                        [(ngModel)]="edicionServicio.minutos"
+                    /></span>
+                    <span
+                      ><label [for]="'sv-p-' + s.id">Precio (COP)</label
+                      ><input
+                        [id]="'sv-p-' + s.id"
+                        name="p"
+                        type="number"
+                        min="0"
+                        step="1000"
+                        [(ngModel)]="edicionServicio.precio"
+                    /></span>
+                  </div>
+                  <div class="acciones-fila">
+                    <button class="btn sm" type="submit">Guardar</button>
+                    <button class="ghost sm" type="button" (click)="editandoServicio.set(null)">
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <div class="fila-linea">
+                  <span class="crece"
+                    ><strong>{{ s.nombre }}</strong
+                    ><small class="muted"
+                      >{{ s.minutos }} min · {{ cop(s.precio)
+                      }}{{ s.activo ? '' : ' · inactivo' }}</small
+                    ></span
+                  >
+                  <button
+                    class="ghost sm"
+                    type="button"
+                    (click)="editarServicio(s)"
+                    [attr.aria-label]="'Editar ' + s.nombre"
+                  >
+                    Editar
+                  </button>
+                </div>
+                <div class="acciones-fila">
+                  <label class="check"
+                    ><input
+                      type="checkbox"
+                      [checked]="!!s.activo"
+                      (change)="cfg.editarServicio(s.id, { activo: !s.activo })"
+                    />
+                    Activo</label
+                  >
+                  <button
+                    class="ghost sm peligro"
+                    type="button"
+                    (click)="borrarServicio(s)"
+                    [attr.aria-label]="'Borrar ' + s.nombre"
+                  >
+                    Borrar
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+        <form class="card form" (ngSubmit)="crearServicio()">
+          <h2>Nuevo servicio</h2>
+          <label for="ns-n">Nombre</label>
+          <input
+            id="ns-n"
+            name="n"
+            [(ngModel)]="nuevoServicio.nombre"
+            required
+            placeholder="Ej.: Keratina"
+          />
+          <div class="dos">
+            <span
+              ><label for="ns-m">Minutos</label
+              ><input
+                id="ns-m"
+                name="m"
+                type="number"
+                min="10"
+                step="5"
+                [(ngModel)]="nuevoServicio.minutos"
+            /></span>
+            <span
+              ><label for="ns-p">Precio (COP)</label
+              ><input
+                id="ns-p"
+                name="p"
+                type="number"
+                min="0"
+                step="1000"
+                [(ngModel)]="nuevoServicio.precio"
+            /></span>
+          </div>
+          <button class="btn" type="submit" [disabled]="!nuevoServicio.nombre.trim()">
+            Agregar servicio
+          </button>
+        </form>
+      </section>
+    }
+
+    @case ('estilistas') {
+      <section id="panel-estilistas" role="tabpanel" aria-labelledby="tab-estilistas">
+        <ul class="lista">
+          @for (e of cfg.estilistas(); track e.id) {
+            <li class="card fila-col" [class.inactivo]="!e.activo">
+              <div class="fila-linea">
+                <span class="avatar" aria-hidden="true">{{ e.nombre[0] }}</span>
+                <span class="crece"
+                  ><strong>{{ e.nombre }}</strong
+                  ><small class="muted"
+                    >{{ e.horario.length }} día(s) con horario{{
+                      e.activo ? '' : ' · inactiva'
+                    }}</small
+                  ></span
+                >
+              </div>
+              <div class="acciones-fila">
+                <label class="pct"
+                  >Comisión
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    [value]="e.comisionPct"
+                    (change)="cambiarComision(e, $any($event.target).value)"
+                    [attr.aria-label]="'Comisión de ' + e.nombre + ' en porcentaje'"
+                  />
+                  %
+                </label>
+                <label class="check"
+                  ><input
+                    type="checkbox"
+                    [checked]="e.activo"
+                    (change)="cfg.editarEstilista(e.id, { activo: !e.activo })"
+                  />
+                  Activa</label
+                >
+              </div>
+            </li>
+          }
+        </ul>
+        <form class="card form" (ngSubmit)="crearEstilista()">
+          <h2>Nueva estilista</h2>
+          <label for="ne-n">Nombre</label>
+          <input id="ne-n" name="n" [(ngModel)]="nuevaEstilista.nombre" required />
+          <label for="ne-c">Comisión (%)</label>
+          <input
+            id="ne-c"
+            name="c"
+            type="number"
+            min="0"
+            max="100"
+            [(ngModel)]="nuevaEstilista.comisionPct"
+          />
+          <button class="btn" type="submit" [disabled]="!nuevaEstilista.nombre.trim()">
+            Agregar estilista
+          </button>
+        </form>
+      </section>
+    }
+
+    @case ('horarios') {
+      <section id="panel-horarios" role="tabpanel" aria-labelledby="tab-horarios">
+        <label for="h-est" class="etiqueta">Estilista</label>
+        <select
+          id="h-est"
+          [value]="estilistaHorario()"
+          (change)="elegirEstilistaHorario($any($event.target).value)"
+        >
+          @for (e of cfg.estilistas(); track e.id) {
+            <option [value]="e.id">{{ e.nombre }}</option>
+          }
+        </select>
+        <form class="card form" (ngSubmit)="guardarHorario()">
+          <h2>Horario semanal</h2>
+          @for (d of semana; track d.dia) {
+            <div class="dia" [class.libre]="!d.atiende">
+              <label class="check"
+                ><input type="checkbox" [name]="'at-' + d.dia" [(ngModel)]="d.atiende" />
+                {{ dias[d.dia] }}</label
+              >
+              @if (d.atiende) {
+                <span class="horas-dia">
+                  <input
+                    type="time"
+                    step="1800"
+                    [name]="'ab-' + d.dia"
+                    [(ngModel)]="d.abre"
+                    [attr.aria-label]="'Abre el ' + dias[d.dia]"
+                  />
+                  <span aria-hidden="true">a</span>
+                  <input
+                    type="time"
+                    step="1800"
+                    [name]="'ci-' + d.dia"
+                    [(ngModel)]="d.cierra"
+                    [attr.aria-label]="'Cierra el ' + dias[d.dia]"
+                  />
+                </span>
+              } @else {
+                <span class="muted">Descansa</span>
+              }
+            </div>
+          }
+          <button class="btn" type="submit">Guardar horario</button>
+        </form>
+
+        <section class="card">
+          <h2>Días libres y excepciones</h2>
+          <ul class="lista">
+            @for (x of cfg.excepciones(); track x.id) {
+              <li class="fila-linea exc">
+                <span class="crece"
+                  ><strong>{{ x.fecha }}</strong>
+                  <small class="muted"
+                    >{{ nombreEstilista(x.estilistaId) }} ·
+                    {{ x.cerrado ? 'No se atiende' : x.abre + ' a ' + x.cierra
+                    }}{{ x.motivo ? ' · ' + x.motivo : '' }}</small
+                  ></span
+                >
+                <button
+                  class="ghost sm"
+                  type="button"
+                  (click)="cfg.borrarExcepcion(x.id)"
+                  [attr.aria-label]="'Quitar excepción del ' + x.fecha"
+                >
+                  ✕
+                </button>
+              </li>
+            } @empty {
+              <li class="muted">Sin excepciones próximas.</li>
+            }
+          </ul>
+          <form class="form" (ngSubmit)="crearExcepcion()">
+            <label for="x-f">Fecha</label>
+            <input id="x-f" name="f" type="date" [(ngModel)]="excepcion.fecha" required />
+            <label for="x-e">Para</label>
+            <select id="x-e" name="e" [(ngModel)]="excepcion.estilistaId">
+              <option value="">Todo el salón (festivo)</option>
+              @for (e of cfg.estilistas(); track e.id) {
+                <option [value]="e.id">{{ e.nombre }}</option>
+              }
+            </select>
+            <label class="check"
+              ><input type="checkbox" name="c" [(ngModel)]="excepcion.cerrado" /> No se atiende ese
+              día</label
+            >
+            @if (!excepcion.cerrado) {
+              <div class="dos">
+                <span
+                  ><label for="x-a">Abre</label
+                  ><input id="x-a" name="a" type="time" step="1800" [(ngModel)]="excepcion.abre"
+                /></span>
+                <span
+                  ><label for="x-c">Cierra</label
+                  ><input id="x-c" name="ci" type="time" step="1800" [(ngModel)]="excepcion.cierra"
+                /></span>
+              </div>
+            }
+            <label for="x-m">Motivo (opcional)</label>
+            <input
+              id="x-m"
+              name="m"
+              [(ngModel)]="excepcion.motivo"
+              placeholder="Ej.: Festivo, cita médica"
+            />
+            <button class="btn" type="submit" [disabled]="!excepcion.fecha">
+              Agregar excepción
+            </button>
+          </form>
+        </section>
+      </section>
+    }
+
+    @case ('equipo') {
+      <section id="panel-equipo" role="tabpanel" aria-labelledby="tab-equipo">
+        @if (temporal(); as t) {
+          <div class="card ok" role="status">
+            <p class="eyebrow">Contraseña temporal</p>
+            <p>
+              Para <strong>{{ t.email }}</strong
+              >:
+            </p>
+            <p class="clave">
+              <code>{{ t.clave }}</code>
+            </p>
+            <p class="muted">Se muestra una sola vez. Al ingresar deberá cambiarla.</p>
+            <div class="acciones-fila">
+              <button class="btn sm" type="button" (click)="copiar(t.clave)">Copiar</button>
+              <button class="ghost sm" type="button" (click)="temporal.set(null)">Listo</button>
+            </div>
+          </div>
+        }
+        <ul class="lista">
+          @for (u of cfg.usuarios(); track u.id) {
+            <li class="card fila-col">
+              <div class="fila-linea">
+                <span class="avatar" aria-hidden="true">{{ u.nombre[0] }}</span>
+                <span class="crece"
+                  ><strong>{{ u.nombre }}</strong
+                  ><small class="muted"
+                    >{{ u.email }} · {{ u.rol === 'duena' ? 'Dueña' : 'Estilista' }}</small
+                  ></span
+                >
+                @if (u.debeCambiarPassword) {
+                  <span class="insignia">Pendiente</span>
+                }
+              </div>
+              @if (u.rol !== 'duena') {
+                <div class="acciones-fila">
+                  <button class="ghost sm" type="button" (click)="restablecer(u.id, u.email)">
+                    Nueva contraseña temporal
+                  </button>
+                  <button
+                    class="ghost sm peligro"
+                    type="button"
+                    (click)="borrarUsuario(u.id, u.nombre)"
+                    [attr.aria-label]="'Quitar acceso a ' + u.nombre"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+        <form class="card form" (ngSubmit)="invitar()">
+          <h2>Invitar estilista</h2>
+          <label for="i-n">Nombre</label>
+          <input id="i-n" name="n" [(ngModel)]="invitacion.nombre" required />
+          <label for="i-e">Correo</label>
+          <input
+            id="i-e"
+            name="e"
+            type="email"
+            [(ngModel)]="invitacion.email"
+            required
+            autocomplete="off"
+          />
+          <label for="i-s">Estilista en la agenda</label>
+          <select id="i-s" name="s" [(ngModel)]="invitacion.estilistaId" required>
+            <option value="" disabled>Escoge…</option>
+            @for (e of cfg.estilistas(); track e.id) {
+              <option [value]="e.id">{{ e.nombre }}</option>
+            }
+          </select>
+          <button
+            class="btn"
+            type="submit"
+            [disabled]="
+              !invitacion.nombre.trim() || !invitacion.email.trim() || !invitacion.estilistaId
+            "
+          >
+            Crear usuario
+          </button>
+        </form>
+      </section>
+    }
+  }
+}

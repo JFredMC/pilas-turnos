@@ -50,6 +50,21 @@ services:
       # Siembra "salon-ejemplo" al arrancar si no existe (el plan Free no tiene Shell). Pon "false" para apagarlo.
       - key: SEED_DEMO
         value: 'true'
-      # Contraseña de los usuarios de ejemplo (no se versiona).
+      # Web donde viven los enlaces de los correos (recuperar contraseña).
+      - key: APP_URL
+        value: https://jfredmc.github.io/pilas-turnos
+      # Correo con Amazon SES. Mientras MAIL_PROVIDER no sea "ses", los correos no salen (en producción
+      # solo queda un aviso en el log, sin el enlace).
+      - key: MAIL_PROVIDER
+        value: log
+      - key: SES_AWS_REGION
+        value: us-east-2
+      - key: SES_FROM_EMAIL
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      # Contraseña de los usuarios de ejemplo si se corre el seed (no se versiona).
       - key: SEED_PASSWORD
         sync: false

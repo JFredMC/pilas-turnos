@@ -13,6 +13,10 @@ export interface AppConfig {
   reservasRpm: number;
   /** Versión del aviso de privacidad que acepta la clienta. */
   avisoPrivacidadVersion: string;
+  produccion: boolean;
+  /** URL pública de la web (para los enlaces de los correos). */
+  appUrl: string;
+  correo: { proveedor: 'ses' | 'log'; region: string; remitente: string | null };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -35,5 +39,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     loginRpm: num('LOGIN_RPM', 5),
     reservasRpm: num('RESERVAS_RPM', 10),
     avisoPrivacidadVersion: env['AVISO_PRIVACIDAD_VERSION'] ?? '2026-10',
+    produccion: prod,
+    appUrl: (env['APP_URL'] ?? 'http://localhost:4200').replace(/\/+$/, ''),
+    correo: {
+      proveedor: env['MAIL_PROVIDER'] === 'ses' ? 'ses' : 'log',
+      region: env['SES_AWS_REGION'] ?? 'us-east-2',
+      remitente: env['SES_FROM_EMAIL'] || null,
+    },
   };
 }

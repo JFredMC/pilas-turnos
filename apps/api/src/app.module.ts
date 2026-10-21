@@ -9,6 +9,8 @@ import { DB, POOL, crearDb, crearPool } from './db/client';
 import { HealthController } from './health.controller';
 import { PublicoController } from './publico.controller';
 import { SalonController } from './salon.controller';
+import { ConfiguracionController } from './configuracion.controller';
+import { CorreoService } from './correo';
 import { CONFIG } from './tokens';
 
 export interface AppDeps {
@@ -35,13 +37,20 @@ export class AppModule {
           signOptions: { expiresIn: config.jwtExpiresIn as never },
         }),
       ],
-      controllers: [HealthController, AuthController, PublicoController, SalonController],
+      controllers: [
+        HealthController,
+        AuthController,
+        PublicoController,
+        SalonController,
+        ConfiguracionController,
+      ],
       providers: [
         { provide: CONFIG, useValue: config },
         { provide: POOL, useFactory: () => crearPool(config.databaseUrl) },
         { provide: DB, inject: [POOL], useFactory: crearDb },
         { provide: APP_GUARD, useClass: ThrottlerGuard },
         JwtGuard,
+        CorreoService,
         CerrarPool,
       ],
     };

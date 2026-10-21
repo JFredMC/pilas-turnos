@@ -15,6 +15,13 @@
       "when": 1792554271763,
       "tag": "0001_sin_choques",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792555889748,
+      "tag": "0002_configuracion_salon",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,8 @@ export async function sembrar(
         ciudad: 'Turbo',
         telefono: '3000000000',
         abonoCop: 5000,
+        whatsapp: '3000000000',
+        nequiNumero: '3000000000',
       })
       .returning();
     const est = await tx

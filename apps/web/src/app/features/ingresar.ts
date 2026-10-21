@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TurnosStore } from '../core/turnos.store';
 
 @Component({
   selector: 'app-ingresar',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <h1>Ingresar al salón</h1>
     <p class="muted">Para la dueña y las estilistas.</p>
@@ -32,6 +32,7 @@ import { TurnosStore } from '../core/turnos.store';
         Ingresar
       </button>
     </form>
+    <p><a routerLink="/salon/recuperar">¿Olvidaste tu contraseña?</a></p>
     @if (store.error()) {
       <p class="aviso" role="alert">{{ store.error() }}</p>
     }
@@ -50,7 +51,9 @@ export class Ingresar {
     const ok = await this.store.ingresar(this.email.trim(), this.clave);
     this.cargando.set(false);
     this.clave = '';
-    if (ok) {
+    if (ok === 'cambiar') {
+      await this.router.navigateByUrl('/salon/cambiar-clave');
+    } else if (ok) {
       const volver = this.ruta.snapshot.queryParamMap.get('volver');
       await this.router.navigateByUrl(volver?.startsWith('/salon/') ? volver : '/salon/agenda');
     }
