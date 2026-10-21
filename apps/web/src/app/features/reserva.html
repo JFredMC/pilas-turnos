@@ -1,0 +1,153 @@
+<section class="hero">
+  <p class="eyebrow">{{ store.salonNombre() }} · Turbo</p>
+  <h1>Separa tu turno</h1>
+  <p class="muted">Sin crear cuenta. Te confirmamos por WhatsApp.</p>
+</section>
+
+@if (paso() < 5) {
+  <ol class="pasos" aria-label="Pasos de la reserva">
+    @for (n of [1, 2, 3, 4]; track n) {
+      <li
+        [class.activo]="paso() === n"
+        [class.hecho]="paso() > n"
+        [attr.aria-current]="paso() === n ? 'step' : null"
+      >
+        {{ n }}
+      </li>
+    }
+  </ol>
+}
+
+@switch (paso()) {
+  @case (1) {
+    <h2>1. ¿Qué te vas a hacer?</h2>
+    <ul class="lista">
+      @for (s of store.servicios(); track s.id) {
+        <li>
+          <button class="opcion" type="button" (click)="elegirServicio(s.id)">
+            <span
+              ><strong>{{ s.nombre }}</strong
+              ><small class="muted">{{ s.minutos }} min</small></span
+            >
+            <span class="precio">{{ cop(s.precio) }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  @case (2) {
+    <h2>2. ¿Con quién?</h2>
+    <ul class="lista">
+      @for (e of store.estilistas(); track e.id) {
+        <li>
+          <button class="opcion" type="button" (click)="elegirEstilista(e.id)">
+            <span class="avatar" aria-hidden="true">{{ e.nombre[0] }}</span>
+            <span class="crece"
+              ><strong>{{ e.nombre }}</strong></span
+            >
+          </button>
+        </li>
+      }
+    </ul>
+    <button class="ghost" type="button" (click)="atras()">← Atrás</button>
+  }
+  @case (3) {
+    <h2>3. Escoge el día y la hora</h2>
+    <p class="muted">{{ servicio()?.nombre }} con {{ estilista()?.nombre }}</p>
+    <div class="tabs" role="group" aria-label="Día">
+      @for (d of dias; track d.fecha) {
+        <button type="button" [attr.aria-pressed]="dia().fecha === d.fecha" (click)="elegirDia(d)">
+          {{ d.nombre }}
+        </button>
+      }
+    </div>
+    @if (cargando()) {
+      <p class="muted" role="status">Buscando cupos…</p>
+    } @else if (horarios().length) {
+      <div class="horas" role="group" aria-label="Horarios disponibles">
+        @for (h of horarios(); track h.hora) {
+          <button type="button" class="chip" (click)="elegirHora(h)">{{ h.hora }}</button>
+        }
+      </div>
+    } @else {
+      <p class="aviso">No quedan cupos ese día. Anótate en la lista de espera en el salón.</p>
+    }
+    <button class="ghost" type="button" (click)="atras()">← Atrás</button>
+  }
+  @case (4) {
+    <h2>4. Tus datos</h2>
+    <div class="card resumen">
+      <p>
+        <strong>{{ servicio()?.nombre }}</strong> · {{ estilista()?.nombre }}
+      </p>
+      <p>
+        Hoy a las <strong>{{ cupo()?.hora }}</strong> · {{ cop(servicio()?.precio ?? 0) }}
+      </p>
+    </div>
+    <form (ngSubmit)="confirmar()" class="form">
+      <label for="nombre">Tu nombre</label>
+      <input id="nombre" name="nombre" [(ngModel)]="nombre" required autocomplete="given-name" />
+      <label for="tel">Celular (WhatsApp)</label>
+      <input
+        id="tel"
+        name="tel"
+        [(ngModel)]="telefono"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="300 000 0000"
+      />
+      <label class="check">
+        <input type="checkbox" [checked]="pagarAbono()" (change)="pagarAbono.set(!pagarAbono())" />
+        Abonar {{ cop(store.abonoCop()) }} por Nequi para asegurar el cupo
+      </label>
+      <label class="check">
+        <input
+          type="checkbox"
+          name="acepta"
+          [checked]="acepta()"
+          (change)="acepta.set(!acepta())"
+          required
+        />
+        <span
+          >Autorizo a {{ store.salonNombre() }} a usar mi nombre y celular solo para gestionar mis
+          turnos (Ley 1581 de 2012). Puedo pedir que los borren cuando quiera.</span
+        >
+      </label>
+      <button class="btn" type="submit" [disabled]="!nombre.trim() || !acepta() || cargando()">
+        Confirmar turno
+      </button>
+    </form>
+    <button class="ghost" type="button" (click)="atras()">← Atrás</button>
+  }
+  @case (5) {
+    <div class="card ok" role="status">
+      <p class="eyebrow">¡Quedó separado!</p>
+      <h2>
+        {{ cita()?.clienta }}, te esperamos {{ dia().nombre.toLowerCase() }} a las
+        {{ cita()?.hora }}
+      </h2>
+      <p>{{ servicio()?.nombre }} con {{ estilista()?.nombre }}</p>
+      @if (cita()?.codigo) {
+        <p>
+          Tu código: <strong>{{ cita()?.codigo }}</strong>
+        </p>
+      }
+    </div>
+    @if (cita()?.abono) {
+      <div class="card centro">
+        <h3>Abona {{ cop(cita()?.abono ?? 0) }} con Nequi</h3>
+        <app-qr-simulado [semilla]="cita()?.id ?? ''" [etiqueta]="cop(cita()?.abono ?? 0)" />
+        <p class="aviso">
+          Simulación: este QR es de ejemplo y no cobra nada. En la versión real será el QR de Nequi
+          Negocios del salón (sin comisión).
+        </p>
+      </div>
+    }
+    <a class="btn wa" [href]="whatsapp()" target="_blank" rel="noopener">Compartir por WhatsApp</a>
+    <button class="ghost" type="button" (click)="otra()">Separar otro turno</button>
+  }
+}
+
+@if (store.error()) {
+  <p class="aviso" role="alert">{{ store.error() }}</p>
+}

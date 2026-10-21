@@ -1,0 +1,52 @@
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="top">
+  <a routerLink="/" class="logo" (click)="menu.set(false)"
+    ><span class="dot" aria-hidden="true"></span>Pilas</a
+  >
+  <div class="acciones">
+    <button
+      type="button"
+      class="icono"
+      (click)="theme.alternar()"
+      [attr.aria-pressed]="theme.tema() === 'dark'"
+      aria-label="Modo oscuro"
+      [title]="theme.tema() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    >
+      <span aria-hidden="true">{{ theme.tema() === 'dark' ? '☀️' : '🌙' }}</span>
+    </button>
+    <button
+      type="button"
+      class="icono"
+      (click)="menu.set(!menu())"
+      [attr.aria-expanded]="menu()"
+      aria-controls="menu-principal"
+      aria-label="Menú"
+    >
+      <span aria-hidden="true">{{ menu() ? '✕' : '☰' }}</span>
+    </button>
+  </div>
+</header>
+<nav id="menu-principal" class="menu" [class.abierto]="menu()" aria-label="Principal">
+  <ul>
+    @for (e of enlaces; track e.ruta) {
+      <li>
+        <a
+          [routerLink]="e.ruta"
+          routerLinkActive="activo"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="menu.set(false)"
+          >{{ e.texto }}</a
+        >
+      </li>
+    }
+    @if (store.conApi && store.logueado()) {
+      <li><button type="button" class="ghost" (click)="salir()">Salir</button></li>
+    }
+  </ul>
+</nav>
+@if (!store.conApi) {
+  <p class="banda" role="note">Prototipo con datos de ejemplo · sin backend</p>
+}
+<main id="contenido" tabindex="-1">
+  <router-outlet />
+</main>

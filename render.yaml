@@ -1,0 +1,52 @@
+# Blueprint de Render para la API de Pilas + PostgreSQL (mismo estilo que Ñapa).
+# En Render: New → Blueprint → repositorio JFredMC/pilas-turnos, rama main.
+# Render crea la base, genera JWT_SECRET y conecta DATABASE_URL solo. Pide SEED_PASSWORD (sync: false).
+databases:
+  - name: pilas-db
+    plan: free
+    region: oregon
+    databaseName: pilas
+    user: pilas
+    postgresMajorVersion: '17'
+
+services:
+  - type: web
+    name: pilas-api
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    # Despliega solo cuando el CI de main pasa.
+    autoDeployTrigger: checksPass
+    buildCommand: >-
+      pnpm install --frozen-lockfile --prod=false --filter @pilas/api... &&
+      pnpm --filter @pilas/api build
+    # El plan gratuito no tiene preDeployCommand: las migraciones (idempotentes) corren al arrancar.
+    startCommand: node apps/api/dist/db/migrate.js && node apps/api/dist/main.js
+    healthCheckPath: /api/health
+    buildFilter:
+      paths:
+        - apps/api/**
+        - pnpm-lock.yaml
+        - package.json
+        - render.yaml
+      ignoredPaths:
+        - apps/api/test/**
+        - '**/*.spec.ts'
+        - '**/*.md'
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '24'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pilas-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://jfredmc.github.io
+      # Contraseña de los usuarios de ejemplo si se corre el seed (no se versiona).
+      - key: SEED_PASSWORD
+        sync: false

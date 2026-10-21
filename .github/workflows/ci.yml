@@ -6,10 +6,14 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  build-test:
-    name: Build y tests
+  web:
+    name: Web · build y tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -18,5 +22,38 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
-      - run: pnpm build:pages
+      - run: pnpm --filter @pilas/web typecheck
+      - run: pnpm --filter @pilas/web test
+      - run: pnpm --filter @pilas/web build:pages
+
+  api:
+    name: API · build y tests de integración (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: pilas
+          POSTGRES_PASSWORD: pilas
+          POSTGRES_DB: pilas_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U pilas" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgres://pilas:pilas@localhost:5432/pilas_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pilas/api typecheck
+      - run: pnpm --filter @pilas/api test
+      - run: pnpm --filter @pilas/api build
+      - name: Migraciones y seed sobre la base limpia
+        env:
+          DATABASE_URL: postgres://pilas:pilas@localhost:5432/pilas_test
+        run: pnpm --filter @pilas/api db:migrate && pnpm --filter @pilas/api db:seed

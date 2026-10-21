@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+
+onlyBuiltDependencies:
+  - '@node-rs/argon2'
+  - '@swc/core'
+  - esbuild
+  - lmdb
+  - msgpackr-extract
+ignoredBuiltDependencies:
+  - '@parcel/watcher'
