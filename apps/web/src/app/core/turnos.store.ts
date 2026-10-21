@@ -198,22 +198,49 @@ export class TurnosStore {
   }
 
   // ---------- Salón (requiere login con API) ----------
-  async ingresar(email: string, password: string): Promise<boolean> {
-    if (!(await this.despertar())) return false;
+  async ingresar(email: string, password: string): Promise<'ok' | 'cambiar' | null> {
+    if (!(await this.despertar())) return null;
     const r = await this.intentar(() =>
-      api.pedir<{ token: string; usuario: { nombre: string; rol: 'duena' | 'estilista' } }>(
-        'POST',
-        '/auth/login',
-        { email, password },
-      ),
+      api.pedir<{
+        token: string;
+        usuario: { nombre: string; rol: 'duena' | 'estilista'; debeCambiarPassword?: boolean };
+      }>('POST', '/auth/login', { email, password }),
+    );
+    if (!r) return null;
+    api.guardarToken(r.token);
+    api.marcarCambio(!!r.usuario.debeCambiarPassword);
+    this.sesion.set(r.usuario);
+    return r.usuario.debeCambiarPassword ? 'cambiar' : 'ok';
+  }
+  /** Rol de la sesión actual (del token). */
+  rol(): 'duena' | 'estilista' | null {
+    return this.conApi ? (api.sesion()?.rol ?? null) : 'duena';
+  }
+  async cambiarClave(actual: string, nueva: string): Promise<boolean> {
+    const r = await this.intentar(() =>
+      api.pedir<{ token: string }>('POST', '/auth/cambiar-password', { actual, nueva }),
     );
     if (!r) return false;
     api.guardarToken(r.token);
-    this.sesion.set(r.usuario);
+    api.marcarCambio(false);
     return true;
+  }
+  async pedirRecuperacion(email: string): Promise<string | null> {
+    const r = await this.intentar(() =>
+      api.pedir<{ mensaje: string }>('POST', '/auth/recuperar', { email }),
+    );
+    return r?.mensaje ?? null;
+  }
+  async restablecer(token: string, nueva: string): Promise<boolean> {
+    return (
+      (await this.intentar(() =>
+        api.pedir('POST', '/auth/restablecer', { token, nueva }).then(() => true),
+      )) === true
+    );
   }
   salir() {
     api.guardarToken(null);
+    api.marcarCambio(false);
     this.sesion.set(null);
   }
 

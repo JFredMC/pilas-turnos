@@ -4,6 +4,7 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     mensaje: string,
+    readonly codigo?: string,
   ) {
     super(mensaje);
   }
@@ -15,6 +16,31 @@ const CLAVE_TOKEN = 'pilas-token';
 export const api = {
   activa: (): boolean => !!ENTORNO.apiUrl,
   slug: ENTORNO.salonSlug,
+  /** Datos del token (sin verificar: solo para la interfaz; la API valida todo). */
+  sesion(): { sub: string; rol: 'duena' | 'estilista'; estilistaId: string | null } | null {
+    const t = this.token();
+    if (!t) return null;
+    try {
+      const b = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(decodeURIComponent(escape(atob(b))));
+    } catch {
+      return null;
+    }
+  },
+  cambioPendiente(): boolean {
+    try {
+      return sessionStorage.getItem('pilas-cambio') === '1';
+    } catch {
+      return false;
+    }
+  },
+  marcarCambio(v: boolean) {
+    try {
+      v ? sessionStorage.setItem('pilas-cambio', '1') : sessionStorage.removeItem('pilas-cambio');
+    } catch {
+      /* sin almacenamiento */
+    }
+  },
   token(): string | null {
     try {
       return sessionStorage.getItem(CLAVE_TOKEN);
@@ -60,7 +86,8 @@ export const api = {
         (typeof datos?.message === 'string' ? datos.message : null) ??
         datos?.mensaje ??
         'Algo salió mal. Intenta de nuevo.';
-      throw new ApiError(r.status, msg);
+      if (datos?.codigo === 'CAMBIO_PASSWORD') this.marcarCambio(true);
+      throw new ApiError(r.status, msg, datos?.codigo);
     }
     return datos as T;
   },
