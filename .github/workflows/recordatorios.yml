@@ -1,0 +1,37 @@
+name: Recordatorios WhatsApp
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  recordar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API: ${{ vars.PILAS_API_URL }}
+      TOKEN: ${{ secrets.PILAS_CRON_TOKEN }}
+    steps:
+      - name: Revisar configuración
+        id: cfg
+        run: |
+          if [ -z "$API" ] || [ -z "$TOKEN" ]; then
+            echo "Falta PILAS_API_URL o el secreto PILAS_CRON_TOKEN; se salta."
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Despertar la API (Render gratis se duerme)
+        if: steps.cfg.outputs.listo == 'si'
+        run: |
+          for i in $(seq 1 10); do
+            curl -fsS -m 30 "$API/api/health" && exit 0
+            sleep 10
+          done
+          exit 1
+      - name: Enviar recordatorios pendientes
+        if: steps.cfg.outputs.listo == 'si'
+        run: curl -fsS -m 60 -X POST -H "Authorization: Bearer $TOKEN" "$API/api/interno/recordatorios"

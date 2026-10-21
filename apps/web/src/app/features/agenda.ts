@@ -16,6 +16,43 @@ import { EstadoCita } from '../core/modelos';
     @if (store.error()) {
       <p class="aviso" role="alert">{{ store.error() }}</p>
     }
+    @if (store.recordatorios().length) {
+      <section class="card" aria-labelledby="t-rec">
+        <h2 id="t-rec">Recordatorios por enviar</h2>
+        <p class="muted">
+          Toca para abrir WhatsApp con el mensaje listo y luego marca «Ya lo envié».
+        </p>
+        <ul class="citas recordatorios">
+          @for (r of store.recordatorios(); track r.citaId + r.tipo) {
+            <li class="cita">
+              <span class="hora">{{ r.hora }}</span>
+              <span class="crece"
+                ><strong>{{ r.clienta }}</strong
+                ><small class="muted">Recordatorio {{ r.tipo }}</small></span
+              >
+              <span class="acciones">
+                <a
+                  class="btn sm"
+                  [href]="r.enlace"
+                  target="_blank"
+                  rel="noopener"
+                  [attr.aria-label]="'Enviar recordatorio por WhatsApp a ' + r.clienta"
+                  >WhatsApp</a
+                >
+                <button
+                  type="button"
+                  class="btn sm"
+                  (click)="store.recordatorioEnviado(r)"
+                  [attr.aria-label]="'Ya le envié el recordatorio a ' + r.clienta"
+                >
+                  Ya lo envié
+                </button>
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
     <div class="tabs" role="tablist" aria-label="Estilistas">
       <button
         role="tab"
@@ -88,7 +125,7 @@ import { EstadoCita } from '../core/modelos';
 })
 export class Agenda implements OnInit {
   ngOnInit() {
-    void this.store.cargarSalon();
+    void this.store.cargarSalon().then(() => this.store.cargarRecordatorios());
   }
   protected readonly store = inject(TurnosStore);
   protected readonly cop = formatoCop;

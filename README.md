@@ -100,6 +100,20 @@ El seed local crea `duena@salon-ejemplo.ejemplo.co` y `yuli@salon-ejemplo.ejempl
 
 Con `MAIL_PROVIDER=ses`, la API envía con Amazon SES usando `SES_AWS_REGION`, `SES_FROM_EMAIL` y las credenciales AWS estándar (`AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY`). Sin eso, en desarrollo el correo con el enlace se escribe en el log de la API. En producción solo queda un aviso, sin el enlace.
 
+## Recordatorios por WhatsApp
+
+Pilas recuerda cada cita **24 h** y **2 h** antes (solo si se reservó con esa anticipación).
+
+- **Con WhatsApp Cloud API** (`WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID`): envía la plantilla aprobada
+  `WHATSAPP_TEMPLATE` (por defecto `recordatorio_cita`, idioma `es`) con 5 variables en el cuerpo:
+  clienta, salón, día, hora y servicio. Los envíos fallidos se reintentan.
+- **Sin token** no se envía nada: la agenda muestra «Recordatorios por enviar» con un enlace `wa.me`
+  con el mensaje listo y el botón «Ya lo envié».
+- **Programación:** mientras la API está despierta revisa cada `RECORDATORIOS_CADA_MIN` minutos. Como el plan
+  gratis de Render se duerme, el workflow `recordatorios.yml` la despierta cada 30 min y llama
+  `POST /api/interno/recordatorios` con `Authorization: Bearer $CRON_TOKEN`. Necesita el mismo valor en
+  `CRON_TOKEN` (Render) y en el secreto `PILAS_CRON_TOKEN` (GitHub); si falta el secreto, el workflow se salta.
+
 ## Despliegue
 
 - **Web:** GitHub Pages (`.github/workflows/pages.yml`). Si defines la variable de repositorio `PILAS_API_URL`, la vista previa usa la API. Si no, sigue con los datos de ejemplo.

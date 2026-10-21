@@ -269,3 +269,28 @@ export const recuperaciones = pgTable(
   },
   (t) => [uniqueIndex('recuperaciones_token_uq').on(t.tokenHash)],
 );
+
+export const tipoRecordatorioEnum = pgEnum('tipo_recordatorio', ['24h', '2h']);
+export const estadoRecordatorioEnum = pgEnum('estado_recordatorio', [
+  'enviado',
+  'manual',
+  'fallido',
+]);
+
+/** Recordatorios de cita por WhatsApp (uno por cita y tipo: idempotente). */
+export const recordatorios = pgTable(
+  'recordatorios',
+  {
+    id: id(),
+    salonId: salonRef(),
+    citaId: uuid('cita_id')
+      .notNull()
+      .references(() => citas.id, { onDelete: 'cascade' }),
+    tipo: tipoRecordatorioEnum('tipo').notNull(),
+    estado: estadoRecordatorioEnum('estado').notNull(),
+    /** Id del mensaje en WhatsApp Cloud API o el error si falló. */
+    detalle: text('detalle'),
+    creadoEn: creado(),
+  },
+  (t) => [uniqueIndex('recordatorios_cita_tipo_uq').on(t.citaId, t.tipo)],
+);

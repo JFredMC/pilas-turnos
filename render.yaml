@@ -65,6 +65,18 @@ services:
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
+      # Recordatorios por WhatsApp Cloud API (sin token no se envían; el panel da enlaces wa.me).
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_TEMPLATE
+        value: recordatorio_cita
+      # Token del cron de GitHub Actions (mismo valor que el secreto PILAS_CRON_TOKEN).
+      - key: CRON_TOKEN
+        sync: false
+      - key: RECORDATORIOS_CADA_MIN
+        value: '10'
       # Contraseña de los usuarios de ejemplo si se corre el seed (no se versiona).
       - key: SEED_PASSWORD
         sync: false
