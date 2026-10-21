@@ -1,7 +1,7 @@
 name: Vista previa en GitHub Pages
 on:
   push:
-    branches: [main, feat/prototipo-mvp]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,10 +24,13 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:pages
+      # Si existe la variable de repo PILAS_API_URL, la vista previa usa la API; si no, datos de ejemplo.
+      - run: pnpm --filter @pilas/web build:pages
+        env:
+          PILAS_API_URL: ${{ vars.PILAS_API_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: dist/pilas-turnos/browser
+          path: apps/web/dist/pilas-turnos/browser
       - id: deploy
         uses: actions/deploy-pages@v4
