@@ -11,8 +11,10 @@ import {
   Param,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { randomBytes } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -108,6 +110,11 @@ export class PublicoController {
         abonoCop: s.abonoActivo ? s.abonoCop : 0,
         whatsapp: s.whatsapp,
         nequiNumero: s.abonoActivo ? s.nequiNumero : null,
+        /** Versión del QR (para la caché); null si no hay QR o no se pide abono. */
+        qrVersion:
+          s.abonoActivo && s.nequiQr && s.nequiQrActualizado
+            ? s.nequiQrActualizado.getTime()
+            : null,
       },
       servicios: svc,
       estilistas: est,
@@ -135,6 +142,19 @@ export class PublicoController {
     if (!svc || !est)
       throw new NotFoundException('Servicio o estilista no encontrado en este salón');
     return { svc, est };
+  }
+
+  /** Imagen del QR de Nequi del salón (solo si pide abono). */
+  @Get('qr')
+  async qr(@Param('slug') slug: string, @Res() res: Response) {
+    const s = await this.salon(slug);
+    if (!s.abonoActivo || !s.nequiQr || !s.nequiQrTipo)
+      throw new NotFoundException('Este salón no tiene QR de Nequi');
+    res.setHeader('Content-Type', s.nequiQrTipo);
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.send(s.nequiQr);
   }
 
   @Get('disponibilidad')

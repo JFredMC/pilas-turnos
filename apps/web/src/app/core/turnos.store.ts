@@ -33,6 +33,14 @@ export class TurnosStore {
   private despierta: Promise<boolean> | null = null;
   readonly salonNombre = signal('Salón Ejemplo');
   readonly abonoCop = signal(5000);
+  /** Nequi del salón para el abono (solo con API). */
+  readonly nequiNumero = signal<string | null>(null);
+  readonly qrVersion = signal<number | null>(null);
+  /** URL de la imagen del QR real de Nequi Negocios, si el salón la subió. */
+  readonly qrUrl = computed(() => {
+    const v = this.qrVersion();
+    return this.conApi && v ? api.url(`/publico/${api.slug}/qr?v=${v}`) : null;
+  });
   readonly servicios = signal<Servicio[]>(this.conApi ? [] : SERVICIOS);
   readonly estilistas = signal<Estilista[]>(this.conApi ? [] : ESTILISTAS);
   readonly citas = signal<Cita[]>(this.conApi ? [] : structuredClone(CITAS_EJEMPLO));
@@ -115,11 +123,18 @@ export class TurnosStore {
     if (!(await this.despertar()) || !this.conApi) return;
     const ok = await this.intentar(async () => {
       const r = await api.pedir<{
-        salon: { nombre: string; abonoCop: number };
+        salon: {
+          nombre: string;
+          abonoCop: number;
+          nequiNumero?: string | null;
+          qrVersion?: number | null;
+        };
         servicios: Servicio[];
         estilistas: { id: string; nombre: string }[];
       }>('GET', `/publico/${api.slug}`);
       this.salonNombre.set(r.salon.nombre);
+      this.nequiNumero.set(r.salon.nequiNumero ?? null);
+      this.qrVersion.set(r.salon.qrVersion ?? null);
       this.abonoCop.set(r.salon.abonoCop);
       this.servicios.set(r.servicios);
       this.estilistas.set(r.estilistas.map((e) => ({ ...e, comision: 0 })));

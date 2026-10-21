@@ -106,6 +106,16 @@ export class Reserva implements OnInit {
     this.paso.set(5);
   }
 
+  protected readonly copiado = signal(false);
+  async copiar(texto: string) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      this.copiado.set(true);
+    } catch {
+      /* sin portapapeles */
+    }
+  }
+
   otra() {
     this.paso.set(1);
     this.servicioId.set(null);

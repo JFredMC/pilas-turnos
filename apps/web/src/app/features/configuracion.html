@@ -100,6 +100,32 @@
         </fieldset>
         <button class="btn" type="submit">Guardar</button>
       </form>
+      <section class="card" aria-labelledby="qr-titulo">
+        <h2 id="qr-titulo">QR de Nequi Negocios</h2>
+        <p class="muted">
+          Sube la imagen del QR de tu Nequi Negocios (la captura de pantalla sirve). Se le mostrará
+          a la clienta en el paso del abono.
+        </p>
+        @if (cfg.qrUrl(); as qr) {
+          <img class="qr-real" [src]="qr" width="180" height="180" alt="QR de Nequi del salón" />
+          <button class="ghost sm peligro" type="button" (click)="cfg.quitarQr()">Quitar QR</button>
+        } @else if (cfg.salon()?.tieneQr) {
+          <p class="aviso">
+            Hay un QR guardado, pero no se muestra porque el abono está desactivado.
+          </p>
+        }
+        <label class="btn subir" for="qr-archivo">{{
+          cfg.salon()?.tieneQr ? 'Cambiar imagen' : 'Subir imagen del QR'
+        }}</label>
+        <input
+          id="qr-archivo"
+          class="sr-only"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          (change)="subirQr($event)"
+        />
+        <small class="muted">PNG, JPEG o WebP de hasta 300 kB.</small>
+      </section>
     }
 
     @case ('servicios') {

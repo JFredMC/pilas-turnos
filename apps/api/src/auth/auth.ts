@@ -217,13 +217,11 @@ export class AuthController {
         .update(recuperaciones)
         .set({ usadoEn: new Date() })
         .where(and(eq(recuperaciones.usuarioId, u.id), isNull(recuperaciones.usadoEn)));
-      await tx
-        .insert(recuperaciones)
-        .values({
-          usuarioId: u.id,
-          tokenHash: sha256(token),
-          expiraEn: new Date(Date.now() + VIGENCIA_MS),
-        });
+      await tx.insert(recuperaciones).values({
+        usuarioId: u.id,
+        tokenHash: sha256(token),
+        expiraEn: new Date(Date.now() + VIGENCIA_MS),
+      });
     });
     const enlace = `${this.config.appUrl}/salon/restablecer?token=${token}`;
     await this.correo

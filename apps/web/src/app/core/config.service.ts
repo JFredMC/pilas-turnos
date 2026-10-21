@@ -10,6 +10,8 @@ export interface SalonConfig {
   nequiNumero: string | null;
   abonoActivo: boolean;
   abonoCop: number;
+  tieneQr?: boolean;
+  qrVersion?: number | null;
 }
 export interface ServicioConfig {
   id: string;
@@ -98,6 +100,28 @@ export class ConfigService {
       async () => this.salon.set(await api.pedir<SalonConfig>('PATCH', '/config/salon', cambios)),
       'Datos del salón guardados.',
     );
+  }
+
+  subirQr(archivo: File) {
+    return this.hacer(async () => {
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(archivo.type))
+        throw new Error('Sube una imagen PNG, JPEG o WebP.');
+      if (archivo.size > 300 * 1024)
+        throw new Error('La imagen pesa más de 300 kB. Recórtala o tómale captura al QR.');
+      this.salon.set(await api.subir<SalonConfig>('/config/salon/qr', archivo));
+    }, 'QR de Nequi guardado.');
+  }
+  quitarQr() {
+    return this.hacer(
+      async () => this.salon.set(await api.pedir<SalonConfig>('DELETE', '/config/salon/qr')),
+      'QR quitado.',
+    );
+  }
+  qrUrl(): string | null {
+    const s = this.salon();
+    return s?.tieneQr && s.qrVersion && s.abonoActivo
+      ? api.url(`/publico/${s.slug}/qr?v=${s.qrVersion}`)
+      : null;
   }
 
   private async recargarServicios() {

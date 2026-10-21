@@ -14,6 +14,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { and, asc, eq, gte, ne, sql } from 'drizzle-orm';
@@ -38,6 +39,7 @@ import {
 } from './auth/auth';
 import { ZodPipe, fechaSchema, nombreSchema, telefonoSchema } from './zod.pipe';
 import { hoy } from './tiempo';
+import { QR_MAX_BYTES, sinQr, tipoImagen } from './qr';
 
 const hora = z
   .string()
@@ -134,7 +136,34 @@ export class ConfiguracionController {
   @Get('salon')
   async salon(@UsuarioActual() u: Sesion) {
     const [s] = await this.db.select().from(salones).where(eq(salones.id, u.salonId));
-    return s;
+    return sinQr(s);
+  }
+
+  /** Sube el QR de Nequi Negocios (cuerpo binario image/png, image/jpeg o image/webp, máx. 300 kB). */
+  @Put('salon/qr')
+  async subirQr(@UsuarioActual() u: Sesion, @Req() req: { body: unknown }) {
+    const b = req.body;
+    if (!Buffer.isBuffer(b) || b.length === 0)
+      throw new BadRequestException('Envía la imagen del QR (PNG, JPEG o WebP)');
+    if (b.length > QR_MAX_BYTES) throw new BadRequestException('La imagen pesa más de 300 kB');
+    const tipo = tipoImagen(b);
+    if (!tipo) throw new BadRequestException('El archivo no es una imagen PNG, JPEG o WebP');
+    const [s] = await this.db
+      .update(salones)
+      .set({ nequiQr: b, nequiQrTipo: tipo, nequiQrActualizado: new Date() })
+      .where(eq(salones.id, u.salonId))
+      .returning();
+    return sinQr(s);
+  }
+
+  @Delete('salon/qr')
+  async borrarQr(@UsuarioActual() u: Sesion) {
+    const [s] = await this.db
+      .update(salones)
+      .set({ nequiQr: null, nequiQrTipo: null, nequiQrActualizado: null })
+      .where(eq(salones.id, u.salonId))
+      .returning();
+    return sinQr(s);
   }
 
   @Patch('salon')
@@ -146,7 +175,7 @@ export class ConfiguracionController {
       throw new BadRequestException('Si pides abono, el monto debe ser mayor que cero');
     try {
       const [s] = await this.db.update(salones).set(b).where(eq(salones.id, u.salonId)).returning();
-      return s;
+      return sinQr(s);
     } catch (e) {
       if (esUnico(e)) throw new ConflictException('Ese enlace ya lo usa otro salón');
       throw e;
@@ -292,17 +321,15 @@ export class ConfiguracionController {
     await this.db.transaction(async (tx) => {
       await tx.delete(horarios).where(eq(horarios.estilistaId, id));
       if (b.franjas.length) {
-        await tx
-          .insert(horarios)
-          .values(
-            b.franjas.map((f) => ({
-              salonId: u.salonId,
-              estilistaId: id,
-              diaSemana: f.diaSemana,
-              abreMin: f.abre,
-              cierraMin: f.cierra,
-            })),
-          );
+        await tx.insert(horarios).values(
+          b.franjas.map((f) => ({
+            salonId: u.salonId,
+            estilistaId: id,
+            diaSemana: f.diaSemana,
+            abreMin: f.abre,
+            cierraMin: f.cierra,
+          })),
+        );
       }
     });
     return {

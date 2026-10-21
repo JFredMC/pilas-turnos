@@ -32,6 +32,7 @@ import { calcularCuadre } from './cuadre';
 import { aLocal, finDia, hhmm, hoy, inicioDia } from './tiempo';
 import { ZodPipe, fechaSchema, nombreSchema, telefonoSchema, uuidSchema } from './zod.pipe';
 import { CONFIG } from './tokens';
+import { sinQr } from './qr';
 import type { AppConfig } from './config';
 
 const fechaQuery = z.object({ fecha: fechaSchema.optional() });
@@ -75,7 +76,7 @@ export class SalonController {
         .where(eq(estilistas.salonId, u.salonId))
         .orderBy(estilistas.nombre),
     ]);
-    return { salon: s, servicios: svc, estilistas: est, rol: u.rol };
+    return { salon: sinQr(s), servicios: svc, estilistas: est, rol: u.rol };
   }
 
   @Get('agenda')

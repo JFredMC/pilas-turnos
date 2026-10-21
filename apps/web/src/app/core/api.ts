@@ -66,6 +66,28 @@ export const api = {
       return false;
     }
   },
+  url(ruta: string): string {
+    return `${ENTORNO.apiUrl}/api${ruta}`;
+  },
+  /** Sube un archivo binario (p. ej. la imagen del QR) con su Content-Type. */
+  async subir<T>(ruta: string, archivo: Blob): Promise<T> {
+    const r = await fetch(this.url(ruta), {
+      method: 'PUT',
+      signal: AbortSignal.timeout(60_000),
+      headers: {
+        'Content-Type': archivo.type || 'application/octet-stream',
+        Authorization: `Bearer ${this.token() ?? ''}`,
+      },
+      body: archivo,
+    });
+    const datos = await r.json().catch(() => ({}));
+    if (!r.ok)
+      throw new ApiError(
+        r.status,
+        typeof datos?.message === 'string' ? datos.message : 'No se pudo subir el archivo.',
+      );
+    return datos as T;
+  },
   async pedir<T>(metodo: string, ruta: string, cuerpo?: unknown): Promise<T> {
     const headers: Record<string, string> = {};
     if (cuerpo !== undefined) headers['Content-Type'] = 'application/json';
