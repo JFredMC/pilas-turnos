@@ -11,6 +11,12 @@ import { PublicoController } from './publico.controller';
 import { SalonController } from './salon.controller';
 import { ConfiguracionController } from './configuracion.controller';
 import { CorreoService } from './correo';
+import {
+  InternoController,
+  RecordatoriosController,
+  RecordatoriosService,
+  WhatsappService,
+} from './recordatorios';
 import { CONFIG } from './tokens';
 
 export interface AppDeps {
@@ -43,6 +49,8 @@ export class AppModule {
         PublicoController,
         SalonController,
         ConfiguracionController,
+        RecordatoriosController,
+        InternoController,
       ],
       providers: [
         { provide: CONFIG, useValue: config },
@@ -51,6 +59,8 @@ export class AppModule {
         { provide: APP_GUARD, useClass: ThrottlerGuard },
         JwtGuard,
         CorreoService,
+        WhatsappService,
+        RecordatoriosService,
         CerrarPool,
       ],
     };

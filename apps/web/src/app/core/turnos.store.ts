@@ -11,6 +11,15 @@ import { Cita, Cupo, EstadoCita, Espera, Estilista, MedioPago, Servicio } from '
 import { CuadreEstilista, cuadrePorEstilista, horariosLibres } from './calculos';
 import { api } from './api';
 
+export interface Recordatorio {
+  citaId: string;
+  tipo: '24h' | '2h';
+  inicio: string;
+  hora: string;
+  clienta: string;
+  enlace: string;
+}
+
 const hoy = () => new Date(Date.now() - 5 * 3_600_000).toISOString().slice(0, 10);
 const aFront = (e: string): EstadoCita => (e === 'no_llego' ? 'no-llego' : (e as EstadoCita));
 const aApi = (e: EstadoCita) => (e === 'no-llego' ? 'no_llego' : e);
@@ -53,6 +62,9 @@ export class TurnosStore {
   readonly esHoy = computed(() => this.fecha() === hoy());
   /** Sin API, los datos de ejemplo son solo de hoy. */
   readonly citasDelDia = computed(() => (this.conApi || this.esHoy() ? this.citas() : []));
+  /** Recordatorios de WhatsApp que tocan ahora (24 h y 2 h antes). Solo con API. */
+  readonly recordatorios = signal<Recordatorio[]>([]);
+  readonly whatsappAutomatico = signal(false);
   private readonly cuadreApi = signal<CuadreEstilista[]>([]);
   readonly cuadre = computed(() =>
     this.conApi
@@ -298,6 +310,31 @@ export class TurnosStore {
       );
       this.espera.set(esp.map((e) => ({ ...e, servicioId: e.servicioId ?? '' })));
     });
+  }
+
+  async cargarRecordatorios(): Promise<void> {
+    if (!this.conApi || !api.token()) return;
+    try {
+      const r = await api.pedir<{ whatsappAutomatico: boolean; pendientes: Recordatorio[] }>(
+        'GET',
+        '/salon/recordatorios',
+      );
+      this.whatsappAutomatico.set(r.whatsappAutomatico);
+      this.recordatorios.set(r.pendientes);
+    } catch {
+      // No es crítico: la agenda sigue funcionando sin la lista de recordatorios.
+    }
+  }
+
+  /** Marca un recordatorio como enviado a mano por el enlace de WhatsApp. */
+  async recordatorioEnviado(r: Recordatorio): Promise<void> {
+    const ok = await this.intentar(() =>
+      api.pedir('POST', '/salon/recordatorios/manual', { citaId: r.citaId, tipo: r.tipo }),
+    );
+    if (ok !== undefined)
+      this.recordatorios.update((l) =>
+        l.filter((x) => !(x.citaId === r.citaId && x.tipo === r.tipo)),
+      );
   }
 
   async cargarCaja(): Promise<void> {

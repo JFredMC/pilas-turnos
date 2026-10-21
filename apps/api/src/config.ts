@@ -17,6 +17,18 @@ export interface AppConfig {
   /** URL pública de la web (para los enlaces de los correos). */
   appUrl: string;
   correo: { proveedor: 'ses' | 'log'; region: string; remitente: string | null };
+  /** WhatsApp Cloud API (Meta). Sin token no se envía nada: el panel ofrece el enlace wa.me. */
+  whatsapp: {
+    token: string;
+    phoneNumberId: string;
+    plantilla: string;
+    idioma: string;
+    apiVersion: string;
+  } | null;
+  /** Protege POST /api/interno/recordatorios (cron de GitHub Actions). Sin él, el endpoint no existe. */
+  cronToken: string | null;
+  /** Cada cuántos minutos revisa recordatorios mientras la API está despierta (0 = apagado). */
+  recordatoriosCadaMin: number;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -41,6 +53,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     avisoPrivacidadVersion: env['AVISO_PRIVACIDAD_VERSION'] ?? '2026-10',
     produccion: prod,
     appUrl: (env['APP_URL'] ?? 'http://localhost:4200').replace(/\/+$/, ''),
+    whatsapp:
+      env['WHATSAPP_TOKEN'] && env['WHATSAPP_PHONE_NUMBER_ID']
+        ? {
+            token: env['WHATSAPP_TOKEN'],
+            phoneNumberId: env['WHATSAPP_PHONE_NUMBER_ID'],
+            plantilla: env['WHATSAPP_TEMPLATE'] ?? 'recordatorio_cita',
+            idioma: env['WHATSAPP_TEMPLATE_LANG'] ?? 'es',
+            apiVersion: env['WHATSAPP_API_VERSION'] ?? 'v21.0',
+          }
+        : null,
+    cronToken: (env['CRON_TOKEN'] ?? '').length >= 24 ? (env['CRON_TOKEN'] as string) : null,
+    recordatoriosCadaMin: Math.max(0, Number(env['RECORDATORIOS_CADA_MIN'] ?? 10) || 0),
     correo: {
       proveedor: env['MAIL_PROVIDER'] === 'ses' ? 'ses' : 'log',
       region: env['SES_AWS_REGION'] ?? 'us-east-2',
