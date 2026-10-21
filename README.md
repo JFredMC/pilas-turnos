@@ -92,6 +92,8 @@ El seed local crea `duena@salon-ejemplo.ejemplo.co` y `yuli@salon-ejemplo.ejempl
 ## Despliegue
 
 - **Web:** GitHub Pages (`.github/workflows/pages.yml`). Si defines la variable de repositorio `PILAS_API_URL`, la vista previa usa la API. Si no, sigue con los datos de ejemplo.
+- **Datos de ejemplo en Render:** con `SEED_DEMO=true` (ya está en `render.yaml`), la API crea `salon-ejemplo` al arrancar si no existe, con la contraseña `SEED_PASSWORD`. Es idempotente. El plan Free no tiene Shell, por eso se siembra al arrancar.
+- **API dormida:** en el plan Free, la API se duerme y tarda unos 50 s en despertar. La web muestra "Despertando el servidor…" mientras tanto y, si no responde en unos 75 s, sigue con los datos de ejemplo.
 - **API y base:** Render Blueprint (`render.yaml`), con el servicio `pilas-api` y la base `pilas-db`, ambos en plan gratuito. `JWT_SECRET` se genera solo y `DATABASE_URL` se conecta desde la base. Las migraciones corren al arrancar.
 
 Autor: Jhon Maquilon ([@JFredMC](https://github.com/JFredMC)) · Licencia MIT.

@@ -14,6 +14,10 @@ export class App {
   protected readonly menu = signal(false);
   protected readonly store = inject(TurnosStore);
   private readonly router = inject(Router);
+  constructor() {
+    // Despierta la API (Render Free) apenas abre la app, sin bloquear la pantalla.
+    void this.store.despertar();
+  }
   salir() {
     this.store.salir();
     this.menu.set(false);

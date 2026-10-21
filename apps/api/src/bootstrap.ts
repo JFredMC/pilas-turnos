@@ -4,6 +4,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule, type AppDeps } from './app.module';
 import { loadConfig } from './config';
 import { limites } from './limites';
+import { DB, type Db } from './db/client';
+import { sembrarDemoSiAplica } from './db/seed';
 
 export async function createApp(deps: AppDeps = {}): Promise<INestApplication> {
   const config = deps.config ?? loadConfig();
@@ -29,6 +31,9 @@ export async function createApp(deps: AppDeps = {}): Promise<INestApplication> {
 export async function bootstrap(): Promise<void> {
   const config = loadConfig();
   const app = await createApp({ config });
+  const semilla = await sembrarDemoSiAplica(app.get<Db>(DB));
+  if (semilla !== 'omitido')
+    new Logger('Pilas').log(`Salón de ejemplo: ${semilla === 'creado' ? 'creado' : 'ya existía'}`);
   await app.listen(config.port, '0.0.0.0');
   new Logger('Pilas').log(`API en el puerto ${config.port} (/api)`);
 }
