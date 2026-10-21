@@ -1,11 +1,14 @@
+import { SelectorFecha } from './selector-fecha';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { TurnosStore } from '../core/turnos.store';
 import { formatoCop } from '../core/calculos';
 
 @Component({
   selector: 'app-caja',
+  imports: [SelectorFecha],
   template: `
-    <h1>Cuadre de caja de hoy</h1>
+    <h1>Cuadre de caja</h1>
+    <app-selector-fecha (cambio)="store.cargarCaja()" />
     <div class="totales">
       <div class="card kpi">
         <small>Ventas</small><strong>{{ cop(total().ventas) }}</strong>

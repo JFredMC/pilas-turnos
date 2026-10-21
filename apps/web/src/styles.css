@@ -669,3 +669,16 @@ select {
     animation: none;
   }
 }
+.selector-fecha {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.selector-fecha input {
+  flex: 1;
+  min-width: 0;
+}
+.titulo-fecha {
+  margin: 0.35rem 0 0.5rem;
+  font-weight: 600;
+}
