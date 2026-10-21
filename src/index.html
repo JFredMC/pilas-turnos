@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pilas · Turnos para tu peluquería</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Separa tu turno en la peluquería sin crear cuenta. Prototipo de Pilas para Turbo, Antioquia."
+    />
+    <meta name="theme-color" content="#be185d" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <script>
+      try {
+        var t =
+          localStorage.getItem('pilas-tema') ||
+          (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <app-root></app-root>
+    <noscript>Activa JavaScript para usar Pilas.</noscript>
+  </body>
+</html>

@@ -1,0 +1,117 @@
+<section class="hero">
+  <p class="eyebrow">Salón Ejemplo · Turbo</p>
+  <h1>Separa tu turno</h1>
+  <p class="muted">Sin crear cuenta. Te confirmamos por WhatsApp.</p>
+</section>
+
+@if (paso() < 5) {
+  <ol class="pasos" aria-label="Pasos de la reserva">
+    @for (n of [1, 2, 3, 4]; track n) {
+      <li
+        [class.activo]="paso() === n"
+        [class.hecho]="paso() > n"
+        [attr.aria-current]="paso() === n ? 'step' : null"
+      >
+        {{ n }}
+      </li>
+    }
+  </ol>
+}
+
+@switch (paso()) {
+  @case (1) {
+    <h2>1. ¿Qué te vas a hacer?</h2>
+    <ul class="lista">
+      @for (s of store.servicios; track s.id) {
+        <li>
+          <button class="opcion" type="button" (click)="elegirServicio(s.id)">
+            <span
+              ><strong>{{ s.nombre }}</strong
+              ><small class="muted">{{ s.minutos }} min</small></span
+            >
+            <span class="precio">{{ cop(s.precio) }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  @case (2) {
+    <h2>2. ¿Con quién?</h2>
+    <ul class="lista">
+      @for (e of store.estilistas; track e.id) {
+        <li>
+          <button class="opcion" type="button" (click)="elegirEstilista(e.id)">
+            <span class="avatar" aria-hidden="true">{{ e.nombre[0] }}</span>
+            <span class="crece"
+              ><strong>{{ e.nombre }}</strong></span
+            >
+          </button>
+        </li>
+      }
+    </ul>
+    <button class="ghost" type="button" (click)="atras()">← Atrás</button>
+  }
+  @case (3) {
+    <h2>3. Escoge la hora (hoy)</h2>
+    <p class="muted">{{ servicio()?.nombre }} con {{ estilista()?.nombre }}</p>
+    @if (horarios().length) {
+      <div class="horas" role="group" aria-label="Horarios disponibles">
+        @for (h of horarios(); track h) {
+          <button type="button" class="chip" (click)="elegirHora(h)">{{ h }}</button>
+        }
+      </div>
+    } @else {
+      <p class="aviso">No quedan cupos hoy. Anótate en la lista de espera en el salón.</p>
+    }
+    <button class="ghost" type="button" (click)="atras()">← Atrás</button>
+  }
+  @case (4) {
+    <h2>4. Tus datos</h2>
+    <div class="card resumen">
+      <p>
+        <strong>{{ servicio()?.nombre }}</strong> · {{ estilista()?.nombre }}
+      </p>
+      <p>
+        Hoy a las <strong>{{ hora() }}</strong> · {{ cop(servicio()?.precio ?? 0) }}
+      </p>
+    </div>
+    <form (ngSubmit)="confirmar()" class="form">
+      <label for="nombre">Tu nombre</label>
+      <input id="nombre" name="nombre" [(ngModel)]="nombre" required autocomplete="given-name" />
+      <label for="tel">Celular (WhatsApp)</label>
+      <input
+        id="tel"
+        name="tel"
+        [(ngModel)]="telefono"
+        inputmode="tel"
+        autocomplete="tel"
+        placeholder="300 000 0000"
+      />
+      <label class="check">
+        <input type="checkbox" [checked]="pagarAbono()" (change)="pagarAbono.set(!pagarAbono())" />
+        Abonar {{ cop(abono) }} por Nequi para asegurar el cupo
+      </label>
+      <button class="btn" type="submit" [disabled]="!nombre.trim()">Confirmar turno</button>
+    </form>
+    <button class="ghost" type="button" (click)="atras()">← Atrás</button>
+  }
+  @case (5) {
+    <div class="card ok" role="status">
+      <p class="eyebrow">¡Quedó separado!</p>
+      <h2>{{ cita()?.clienta }}, te esperamos a las {{ cita()?.hora }}</h2>
+      <p>{{ servicio()?.nombre }} con {{ estilista()?.nombre }}</p>
+    </div>
+    @if (cita()?.abono) {
+      <div class="card centro">
+        <h3>Abona {{ cop(cita()?.abono ?? 0) }} con Nequi</h3>
+        <app-qr-simulado [semilla]="cita()?.id ?? ''" [etiqueta]="cop(cita()?.abono ?? 0)" />
+        <p class="aviso">
+          Simulación: este QR es de ejemplo y no cobra nada. En la versión real será el QR de Nequi
+          Negocios del salón (sin comisión).
+        </p>
+      </div>
+    }
+    <a class="btn wa" [href]="whatsapp()" target="_blank" rel="noopener">Compartir por WhatsApp</a>
+    <button class="ghost" type="button" (click)="otra()">Separar otro turno</button>
+  }
+}
