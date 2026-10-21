@@ -105,7 +105,9 @@ export class PublicoController {
         nombre: s.nombre,
         ciudad: s.ciudad,
         telefono: s.telefono,
-        abonoCop: s.abonoCop,
+        abonoCop: s.abonoActivo ? s.abonoCop : 0,
+        whatsapp: s.whatsapp,
+        nequiNumero: s.abonoActivo ? s.nequiNumero : null,
       },
       servicios: svc,
       estilistas: est,
@@ -200,7 +202,7 @@ export class PublicoController {
           })
           .returning();
         let abono = null;
-        if (b.abonar && s.abonoCop > 0) {
+        if (b.abonar && s.abonoActivo && s.abonoCop > 0) {
           const [p] = await tx
             .insert(pagos)
             .values({
