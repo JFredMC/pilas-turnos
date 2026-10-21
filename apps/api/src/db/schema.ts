@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  customType,
   check,
   date,
   index,
@@ -12,6 +13,9 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+
+/** Bytes crudos (PostgreSQL bytea). */
+const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
 
 export const rolEnum = pgEnum('rol', ['duena', 'estilista']);
 export const estadoCitaEnum = pgEnum('estado_cita', [
@@ -46,6 +50,10 @@ export const salones = pgTable('salones', {
   whatsapp: text('whatsapp'),
   /** Número de Nequi donde se reciben los abonos. */
   nequiNumero: text('nequi_numero'),
+  /** Imagen del QR de Nequi Negocios que sube la dueña (PNG/JPEG/WebP, máx. 300 kB). */
+  nequiQr: bytea('nequi_qr'),
+  nequiQrTipo: text('nequi_qr_tipo'),
+  nequiQrActualizado: timestamp('nequi_qr_actualizado', { withTimezone: true }),
   creadoEn: creado(),
 });
 

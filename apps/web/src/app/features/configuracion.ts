@@ -110,6 +110,12 @@ export class Configuracion implements OnInit {
     });
   }
 
+  subirQr(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const f = input.files?.[0];
+    if (f) void this.cfg.subirQr(f).finally(() => (input.value = ''));
+  }
+
   // ---------- Servicios ----------
   async crearServicio() {
     const n = this.nuevoServicio;

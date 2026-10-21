@@ -22,6 +22,13 @@
       "when": 1792555889748,
       "tag": "0002_configuracion_salon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792556853708,
+      "tag": "0003_qr_nequi",
+      "breakpoints": true
     }
   ]
 }

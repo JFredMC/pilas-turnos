@@ -141,11 +141,37 @@
     @if (cita()?.abono) {
       <div class="card centro">
         <h3>Abona {{ cop(cita()?.abono ?? 0) }} con Nequi</h3>
-        <app-qr-simulado [semilla]="cita()?.id ?? ''" [etiqueta]="cop(cita()?.abono ?? 0)" />
-        <p class="aviso">
-          Simulación: este QR es de ejemplo y no cobra nada. En la versión real será el QR de Nequi
-          Negocios del salón (sin comisión).
-        </p>
+        @if (store.qrUrl(); as qr) {
+          <img
+            class="qr-real"
+            [src]="qr"
+            width="220"
+            height="220"
+            [alt]="'Código QR de Nequi de ' + store.salonNombre()"
+          />
+          <p class="muted">
+            Abre Nequi, toca <strong>Pagar con QR</strong> y escanea este código. Escribe
+            {{ cop(cita()?.abono ?? 0) }}.
+          </p>
+        } @else if (store.nequiNumero(); as numero) {
+          <p class="nequi-num">
+            <span class="muted">Envía a este Nequi:</span> <strong>{{ numero }}</strong>
+          </p>
+          <button class="ghost sm" type="button" (click)="copiar(numero)">Copiar número</button>
+        } @else if (!store.conApi) {
+          <app-qr-simulado [semilla]="cita()?.id ?? ''" [etiqueta]="cop(cita()?.abono ?? 0)" />
+          <p class="aviso">
+            Simulación: este QR es de ejemplo y no cobra nada. En la versión real será el QR de
+            Nequi Negocios del salón (sin comisión).
+          </p>
+        } @else {
+          <p class="muted">El salón te confirmará por WhatsApp cómo hacer el abono.</p>
+        }
+        @if (store.conApi) {
+          <p class="muted">
+            Cuando el salón confirme que llegó, tu turno queda asegurado. Guarda tu código.
+          </p>
+        }
       </div>
     }
     <a class="btn wa" [href]="whatsapp()" target="_blank" rel="noopener">Compartir por WhatsApp</a>

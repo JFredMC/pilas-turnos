@@ -18,6 +18,15 @@ describe('seguridad HTTP', () => {
     expect(codigos.slice(0, 3)).toEqual([401, 401, 401]);
     expect(codigos.at(-1)).toBe(429);
   });
+  it('CORS permite PUT (horario y QR) a los orígenes permitidos', async () => {
+    const r = await t
+      .http()
+      .options('/api/config/salon/qr')
+      .set('Origin', 'https://jfredmc.github.io')
+      .set('Access-Control-Request-Method', 'PUT')
+      .set('Access-Control-Request-Headers', 'content-type,authorization');
+    expect(r.headers['access-control-allow-methods']).toContain('PUT');
+  });
   it('CORS solo para orígenes permitidos', async () => {
     const ok = await t.http().get('/api/health').set('Origin', 'https://jfredmc.github.io');
     expect(ok.headers['access-control-allow-origin']).toBe('https://jfredmc.github.io');

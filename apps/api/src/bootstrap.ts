@@ -1,3 +1,4 @@
+import { raw } from 'express';
 import { INestApplication, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -18,10 +19,18 @@ export async function createApp(deps: AppDeps = {}): Promise<INestApplication> {
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.useBodyParser('json', { limit: '20kb' });
+  // Solo la subida del QR acepta binario (imagen), y con tope propio.
+  app.use(
+    '/api/config/salon/qr',
+    raw({
+      type: ['image/png', 'image/jpeg', 'image/webp', 'application/octet-stream'],
+      limit: '320kb',
+    }),
+  );
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: config.corsOrigins,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
   app.enableShutdownHooks();

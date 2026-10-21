@@ -682,3 +682,37 @@ select {
   margin: 0.35rem 0 0.5rem;
   font-weight: 600;
 }
+.qr-real {
+  display: block;
+  margin: 0.5rem auto;
+  border-radius: 12px;
+  background: #fff;
+  padding: 6px;
+  object-fit: contain;
+  max-width: 100%;
+  height: auto;
+}
+.nequi-num strong {
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+}
+.btn.subir {
+  cursor: pointer;
+}
+.qr-real {
+  display: block;
+  margin: 0.5rem auto;
+  border-radius: 12px;
+  background: #fff;
+  padding: 6px;
+  object-fit: contain;
+  max-width: 100%;
+  height: auto;
+}
+.nequi-num strong {
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+}
+.btn.subir {
+  cursor: pointer;
+}
