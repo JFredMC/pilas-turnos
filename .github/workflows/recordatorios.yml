@@ -34,4 +34,5 @@ jobs:
           exit 1
       - name: Enviar recordatorios pendientes
         if: steps.cfg.outputs.listo == 'si'
-        run: curl -fsS -m 60 -X POST -H "Authorization: Bearer $TOKEN" "$API/api/interno/recordatorios"
+        run: |
+          curl -fsS -m 60 -X POST -H "Authorization: Bearer $TOKEN" "$API/api/interno/recordatorios"

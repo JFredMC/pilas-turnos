@@ -17,9 +17,9 @@ flowchart LR
 
 Es un monorepo con pnpm workspaces:
 
-| Carpeta | Qué es |
-|---|---|
-| `apps/web` | Angular standalone con signals, pensado para el celular, instalable (PWA), modo claro/oscuro de un toque y Vitest. |
+| Carpeta    | Qué es                                                                                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web` | Angular standalone con signals, pensado para el celular, instalable (PWA), modo claro/oscuro de un toque y Vitest.                                         |
 | `apps/api` | NestJS 11 + Drizzle ORM sobre PostgreSQL, zod, JWT, argon2 y `@nestjs/throttler`. Los tests de integración usan Vitest + Supertest sobre un Postgres real. |
 
 ### Modelo de datos (multi-salón)
@@ -30,30 +30,31 @@ Los choques de horario se validan en el código y además en la base, con una re
 
 ### Endpoints (`/api`)
 
-| Método y ruta | Acceso | Para qué |
-|---|---|---|
-| `GET /health` | público | Estado de la API y de la base. |
-| `GET /publico/:slug` | público | Salón, servicios y estilistas. |
-| `GET /publico/:slug/disponibilidad?servicioId&estilistaId&fecha` | público | Cupos libres cada 30 minutos. |
-| `POST /publico/:slug/reservas` | público, límite de ritmo | Reserva sin cuenta. Exige `consentimiento: true` y crea el abono Nequi pendiente. |
-| `POST /publico/:slug/espera` | público | Anotarse en la lista de espera. |
-| `DELETE /publico/:slug/mis-datos` | público | Ley 1581: la clienta borra sus datos con su celular y el código de su cita. |
-| `POST /auth/login`, `GET /auth/yo` | — | Login con email y contraseña (argon2) y JWT. |
-| `GET /salon`, `GET /salon/agenda?fecha` | dueña y estilista | La estilista solo ve sus propias citas. |
-| `PATCH /salon/citas/:id` | dueña y estilista | Cambia el estado. Al marcar "atendida" se registran el saldo y la propina. |
-| `POST /salon/pagos/:id/confirmar` | dueña | Confirma que el abono de Nequi llegó. |
-| `GET/POST/DELETE /salon/espera` | dueña y estilista | Lista de espera del salón. |
-| `GET /salon/caja?fecha`, `POST /salon/caja/cierre` | caja: ambas · cierre: dueña | Cuadre por estilista: ventas, comisión, propinas, efectivo y Nequi. |
-| `GET/DELETE /salon/clientas/:id` | dueña | Ley 1581: consultar o borrar los datos de una clienta. Sus citas quedan anónimas para no descuadrar la caja. |
-| `GET/PATCH /config/salon` | dueña | Nombre, slug (enlace), WhatsApp, abono sí/no y monto, número de Nequi. |
-| `GET/POST/PATCH/DELETE /config/servicios` | dueña | Servicios con precio (COP) y duración. Si un servicio tiene citas, borrarlo lo desactiva. |
-| `GET/POST/PATCH /config/estilistas`, `PUT /config/estilistas/:id/horario` | dueña | Estilistas (comisión %, activa) y horario semanal. |
-| `GET/POST/DELETE /config/excepciones` | dueña | Días libres, festivos de todo el salón u horario especial un día. |
-| `GET/POST/DELETE /config/usuarios`, `POST /config/usuarios/:id/restablecer` | dueña | Invitar estilistas con contraseña temporal (se debe cambiar al primer ingreso). |
-| `POST /auth/cambiar-password` | con sesión | Cambia la contraseña y emite un token nuevo. Los tokens anteriores dejan de servir. |
-| `POST /auth/recuperar`, `POST /auth/restablecer` | público, límite de ritmo | Recuperación por correo: enlace de un solo uso, válido 1 hora (se guarda solo el hash). |
+| Método y ruta                                                               | Acceso                      | Para qué                                                                                                     |
+| --------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GET /health`                                                               | público                     | Estado de la API y de la base.                                                                               |
+| `GET /publico/:slug`                                                        | público                     | Salón, servicios y estilistas.                                                                               |
+| `GET /publico/:slug/disponibilidad?servicioId&estilistaId&fecha`            | público                     | Cupos libres cada 30 minutos.                                                                                |
+| `POST /publico/:slug/reservas`                                              | público, límite de ritmo    | Reserva sin cuenta. Exige `consentimiento: true` y crea el abono Nequi pendiente.                            |
+| `POST /publico/:slug/espera`                                                | público                     | Anotarse en la lista de espera.                                                                              |
+| `DELETE /publico/:slug/mis-datos`                                           | público                     | Ley 1581: la clienta borra sus datos con su celular y el código de su cita.                                  |
+| `POST /auth/login`, `GET /auth/yo`                                          | —                           | Login con email y contraseña (argon2) y JWT.                                                                 |
+| `GET /salon`, `GET /salon/agenda?fecha`                                     | dueña y estilista           | La estilista solo ve sus propias citas.                                                                      |
+| `PATCH /salon/citas/:id`                                                    | dueña y estilista           | Cambia el estado. Al marcar "atendida" se registran el saldo y la propina.                                   |
+| `POST /salon/pagos/:id/confirmar`                                           | dueña                       | Confirma que el abono de Nequi llegó.                                                                        |
+| `GET/POST/DELETE /salon/espera`                                             | dueña y estilista           | Lista de espera del salón.                                                                                   |
+| `GET /salon/caja?fecha`, `POST /salon/caja/cierre`                          | caja: ambas · cierre: dueña | Cuadre por estilista: ventas, comisión, propinas, efectivo y Nequi.                                          |
+| `GET/DELETE /salon/clientas/:id`                                            | dueña                       | Ley 1581: consultar o borrar los datos de una clienta. Sus citas quedan anónimas para no descuadrar la caja. |
+| `GET/PATCH /config/salon`                                                   | dueña                       | Nombre, slug (enlace), WhatsApp, abono sí/no y monto, número de Nequi.                                       |
+| `GET/POST/PATCH/DELETE /config/servicios`                                   | dueña                       | Servicios con precio (COP) y duración. Si un servicio tiene citas, borrarlo lo desactiva.                    |
+| `GET/POST/PATCH /config/estilistas`, `PUT /config/estilistas/:id/horario`   | dueña                       | Estilistas (comisión %, activa) y horario semanal.                                                           |
+| `GET/POST/DELETE /config/excepciones`                                       | dueña                       | Días libres, festivos de todo el salón u horario especial un día.                                            |
+| `GET/POST/DELETE /config/usuarios`, `POST /config/usuarios/:id/restablecer` | dueña                       | Invitar estilistas con contraseña temporal (se debe cambiar al primer ingreso).                              |
+| `POST /auth/cambiar-password`                                               | con sesión                  | Cambia la contraseña y emite un token nuevo. Los tokens anteriores dejan de servir.                          |
+| `POST /auth/recuperar`, `POST /auth/restablecer`                            | público, límite de ritmo    | Recuperación por correo: enlace de un solo uso, válido 1 hora (se guarda solo el hash).                      |
 
 **Seguridad:**
+
 - Validación con zod y mensajes de error en español.
 - Límites de ritmo: uno general y otros más estrictos para login, reservas y borrado de datos.
 - CORS con una lista blanca de orígenes (`CORS_ORIGINS`).
@@ -61,6 +62,7 @@ Los choques de horario se validan en el código y además en la base, con una re
 - Body JSON de máximo 20 kB y `trust proxy` activado para Render.
 
 **Ley 1581 de 2012:**
+
 - La clienta autoriza el uso de sus datos con una casilla obligatoria. Se guardan la fecha y la versión del aviso.
 - La clienta o la dueña pueden borrar esos datos.
 - Solo se guardan el nombre y el celular.
@@ -91,6 +93,7 @@ pnpm --filter @pilas/web start
 El seed local crea `duena@salon-ejemplo.ejemplo.co` y `yuli@salon-ejemplo.ejemplo.co`. La contraseña es `SEED_PASSWORD`; en local, si no la defines, es `pilas-ejemplo-local`.
 
 **Tests:**
+
 - `pnpm --filter @pilas/web test`
 - `pnpm --filter @pilas/api test`: usa `DATABASE_URL_TEST`, por defecto `postgres://pilas:pilas@localhost:5432/pilas_test`. Aplica las migraciones y vacía las tablas en cada archivo.
 
@@ -99,6 +102,15 @@ El seed local crea `duena@salon-ejemplo.ejemplo.co` y `yuli@salon-ejemplo.ejempl
 ### Correo (recuperación de contraseña)
 
 Con `MAIL_PROVIDER=ses`, la API envía con Amazon SES usando `SES_AWS_REGION`, `SES_FROM_EMAIL` y las credenciales AWS estándar (`AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY`). Sin eso, en desarrollo el correo con el enlace se escribe en el log de la API. En producción solo queda un aviso, sin el enlace.
+
+## Calidad
+
+- `pnpm lint`: ESLint (angular-eslint + reglas de accesibilidad en web, typescript-eslint en la API).
+- `pnpm format:check`: Prettier.
+- `pnpm e2e`: Playwright contra el build de Pages en modo de ejemplo, en escritorio y móvil
+  (primero `pnpm --filter @pilas/web build:pages`). Con `E2E_BASE_URL` corre contra un sitio publicado.
+
+Todo corre en CI en cada PR.
 
 ## Recordatorios por WhatsApp
 

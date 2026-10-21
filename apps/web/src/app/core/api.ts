@@ -36,7 +36,8 @@ export const api = {
   },
   marcarCambio(v: boolean) {
     try {
-      v ? sessionStorage.setItem('pilas-cambio', '1') : sessionStorage.removeItem('pilas-cambio');
+      if (v) sessionStorage.setItem('pilas-cambio', '1');
+      else sessionStorage.removeItem('pilas-cambio');
     } catch {
       /* sin almacenamiento */
     }
@@ -50,7 +51,8 @@ export const api = {
   },
   guardarToken(t: string | null) {
     try {
-      t ? sessionStorage.setItem(CLAVE_TOKEN, t) : sessionStorage.removeItem(CLAVE_TOKEN);
+      if (t) sessionStorage.setItem(CLAVE_TOKEN, t);
+      else sessionStorage.removeItem(CLAVE_TOKEN);
     } catch {
       /* sin almacenamiento */
     }
