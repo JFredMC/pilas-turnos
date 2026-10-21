@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+apps/web/src/app/core/entorno.ts
+apps/api/drizzle/
+dist/
+.angular/
+playwright-report/
+test-results/
+shots/

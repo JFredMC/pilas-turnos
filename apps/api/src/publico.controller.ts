@@ -323,6 +323,7 @@ export class PublicoController {
 }
 
 export function esChoque(e: unknown): boolean {
-  for (let x: any = e; x; x = x.cause) if (x.code === '23P01') return true;
+  for (let x = e as { code?: string; cause?: unknown } | undefined; x; x = x.cause as typeof x)
+    if (x.code === '23P01') return true;
   return false;
 }

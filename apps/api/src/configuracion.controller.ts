@@ -121,7 +121,8 @@ const desdeQuery = z.object({ desde: fechaSchema.optional() });
 const aHHmm = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 const esUnico = (e: unknown) => {
-  for (let x: any = e; x; x = x.cause) if (x.code === '23505') return true;
+  for (let x = e as { code?: string; cause?: unknown } | undefined; x; x = x.cause as typeof x)
+    if (x.code === '23505') return true;
   return false;
 };
 
