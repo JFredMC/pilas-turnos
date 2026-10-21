@@ -21,7 +21,16 @@ const aApi = (e: EstadoCita) => (e === 'no-llego' ? 'no_llego' : e);
  */
 @Injectable({ providedIn: 'root' })
 export class TurnosStore {
-  readonly conApi = api.activa();
+  /** true mientras se use la API; pasa a false si no responde (respaldo con datos de ejemplo). */
+  private readonly modoApi = signal(api.activa());
+  get conApi(): boolean {
+    return this.modoApi();
+  }
+  /** 'despertando': la API del plan gratis de Render tarda ~50 s en la primera carga. */
+  readonly estadoApi = signal<'listo' | 'conectando' | 'despertando' | 'sin-conexion'>(
+    api.activa() ? 'conectando' : 'listo',
+  );
+  private despierta: Promise<boolean> | null = null;
   readonly salonNombre = signal('Salón Ejemplo');
   readonly abonoCop = signal(5000);
   readonly servicios = signal<Servicio[]>(this.conApi ? [] : SERVICIOS);
@@ -57,10 +66,48 @@ export class TurnosStore {
     }
   }
 
+  /** Espera a que la API despierte (hasta ~75 s). Si no responde, cambia a datos de ejemplo. */
+  despertar(limiteMs = 75_000): Promise<boolean> {
+    if (!api.activa()) return Promise.resolve(false);
+    this.despierta ??= (async () => {
+      const aviso = setTimeout(
+        () => this.estadoApi() === 'conectando' && this.estadoApi.set('despertando'),
+        2_500,
+      );
+      const fin = Date.now() + limiteMs;
+      try {
+        while (Date.now() < fin) {
+          if (await api.salud(Math.min(30_000, Math.max(1_000, fin - Date.now())))) {
+            this.estadoApi.set('listo');
+            return true;
+          }
+          await new Promise((r) => setTimeout(r, 3_000));
+        }
+        this.usarEjemplo();
+        return false;
+      } finally {
+        clearTimeout(aviso);
+      }
+    })();
+    return this.despierta;
+  }
+
+  /** Respaldo: la vista previa sigue funcionando con los datos de ejemplo si la API falla. */
+  usarEjemplo(): void {
+    this.modoApi.set(false);
+    this.estadoApi.set('sin-conexion');
+    this.salonNombre.set('Salón Ejemplo');
+    this.abonoCop.set(5000);
+    this.servicios.set(SERVICIOS);
+    this.estilistas.set(ESTILISTAS);
+    this.citas.set(structuredClone(CITAS_EJEMPLO));
+    this.espera.set(structuredClone(ESPERA_EJEMPLO));
+  }
+
   // ---------- Público ----------
   async cargarSalonPublico(): Promise<void> {
-    if (!this.conApi) return;
-    await this.intentar(async () => {
+    if (!(await this.despertar()) || !this.conApi) return;
+    const ok = await this.intentar(async () => {
       const r = await api.pedir<{
         salon: { nombre: string; abonoCop: number };
         servicios: Servicio[];
@@ -70,7 +117,12 @@ export class TurnosStore {
       this.abonoCop.set(r.salon.abonoCop);
       this.servicios.set(r.servicios);
       this.estilistas.set(r.estilistas.map((e) => ({ ...e, comision: 0 })));
+      return true;
     });
+    if (!ok) {
+      this.usarEjemplo();
+      this.error.set(null);
+    }
   }
 
   async cupos(servicioId: string, estilistaId: string, fecha = hoy()): Promise<Cupo[]> {
@@ -147,6 +199,7 @@ export class TurnosStore {
 
   // ---------- Salón (requiere login con API) ----------
   async ingresar(email: string, password: string): Promise<boolean> {
+    if (!(await this.despertar())) return false;
     const r = await this.intentar(() =>
       api.pedir<{ token: string; usuario: { nombre: string; rol: 'duena' | 'estilista' } }>(
         'POST',
@@ -165,7 +218,7 @@ export class TurnosStore {
   }
 
   async cargarSalon(): Promise<void> {
-    if (!this.conApi) return;
+    if (!(await this.despertar()) || !this.conApi) return;
     await this.intentar(async () => {
       const [info, ag, esp] = await Promise.all([
         api.pedir<{
@@ -200,7 +253,7 @@ export class TurnosStore {
   }
 
   async cargarCaja(): Promise<void> {
-    if (!this.conApi) return;
+    if (!(await this.despertar()) || !this.conApi) return;
     const r = await this.intentar(() =>
       api.pedir<{
         estilistas: (Omit<CuadreEstilista, 'estilista'> & {

@@ -163,27 +163,23 @@ export class SalonController {
           );
         const saldo = Math.max(0, c.precio - abonado);
         if (saldo > 0)
-          await tx
-            .insert(pagos)
-            .values({
-              salonId: u.salonId,
-              citaId: c.id,
-              tipo: 'saldo',
-              medio,
-              monto: saldo,
-              estado: 'confirmado',
-            });
+          await tx.insert(pagos).values({
+            salonId: u.salonId,
+            citaId: c.id,
+            tipo: 'saldo',
+            medio,
+            monto: saldo,
+            estado: 'confirmado',
+          });
         if (b.propina)
-          await tx
-            .insert(pagos)
-            .values({
-              salonId: u.salonId,
-              citaId: c.id,
-              tipo: 'propina',
-              medio,
-              monto: b.propina,
-              estado: 'confirmado',
-            });
+          await tx.insert(pagos).values({
+            salonId: u.salonId,
+            citaId: c.id,
+            tipo: 'propina',
+            medio,
+            monto: b.propina,
+            estado: 'confirmado',
+          });
       }
       return act;
     });

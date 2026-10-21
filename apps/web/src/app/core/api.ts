@@ -29,6 +29,17 @@ export const api = {
       /* sin almacenamiento */
     }
   },
+  /** Ping a /api/health con tiempo límite; false si no responde. */
+  async salud(timeoutMs: number): Promise<boolean> {
+    try {
+      const r = await fetch(`${ENTORNO.apiUrl}/api/health`, {
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      return r.ok;
+    } catch {
+      return false;
+    }
+  },
   async pedir<T>(metodo: string, ruta: string, cuerpo?: unknown): Promise<T> {
     const headers: Record<string, string> = {};
     if (cuerpo !== undefined) headers['Content-Type'] = 'application/json';
@@ -36,6 +47,7 @@ export const api = {
     if (t && !ruta.startsWith('/publico')) headers['Authorization'] = `Bearer ${t}`;
     const r = await fetch(`${ENTORNO.apiUrl}/api${ruta}`, {
       method: metodo,
+      signal: AbortSignal.timeout(30_000),
       headers,
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
     });

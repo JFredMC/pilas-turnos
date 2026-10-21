@@ -183,6 +183,35 @@ export async function sembrar(
   });
 }
 
+/**
+ * Siembra el salón de ejemplo al arrancar si SEED_DEMO=true (Render Free no tiene Shell).
+ * Es idempotente: si "salon-ejemplo" ya existe no toca nada, y si dos instancias arrancan a la vez
+ * la restricción única del slug evita duplicados.
+ */
+export async function sembrarDemoSiAplica(
+  db: Db,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<'omitido' | 'creado' | 'existia'> {
+  if ((env['SEED_DEMO'] ?? '').toLowerCase() !== 'true') return 'omitido';
+  const prod = env['NODE_ENV'] === 'production';
+  const password = env['SEED_PASSWORD'] ?? (prod ? '' : 'pilas-ejemplo-local');
+  if (password.length < 10) {
+    console.warn('SEED_DEMO=true pero falta SEED_PASSWORD (mínimo 10 caracteres): no se siembra.');
+    return 'omitido';
+  }
+  try {
+    const r = await sembrar(db, { password });
+    return r.creado ? 'creado' : 'existia';
+  } catch (e) {
+    if (
+      (e as { code?: string; cause?: { code?: string } }).code === '23505' ||
+      (e as { cause?: { code?: string } }).cause?.code === '23505'
+    )
+      return 'existia';
+    throw e;
+  }
+}
+
 if (require.main === module) {
   try {
     process.loadEnvFile('.env');

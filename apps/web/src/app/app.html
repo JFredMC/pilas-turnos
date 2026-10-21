@@ -44,8 +44,21 @@
     }
   </ul>
 </nav>
-@if (!store.conApi) {
+@if (!store.conApi && store.estadoApi() !== 'sin-conexion') {
   <p class="banda" role="note">Prototipo con datos de ejemplo · sin backend</p>
+}
+@switch (store.estadoApi()) {
+  @case ('despertando') {
+    <p class="banda" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span> Despertando el servidor… la primera carga
+      puede tardar hasta un minuto.
+    </p>
+  }
+  @case ('sin-conexion') {
+    <p class="banda" role="status">
+      No pudimos conectar con el servidor: te mostramos datos de ejemplo.
+    </p>
+  }
 }
 <main id="contenido" tabindex="-1">
   <router-outlet />

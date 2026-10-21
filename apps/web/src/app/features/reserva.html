@@ -21,6 +21,11 @@
 @switch (paso()) {
   @case (1) {
     <h2>1. ¿Qué te vas a hacer?</h2>
+    @if (!store.servicios().length) {
+      <p class="muted" role="status">
+        <span class="spinner" aria-hidden="true"></span> Cargando servicios del salón…
+      </p>
+    }
     <ul class="lista">
       @for (s of store.servicios(); track s.id) {
         <li>

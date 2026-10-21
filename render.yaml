@@ -47,6 +47,9 @@ services:
         generateValue: true
       - key: CORS_ORIGINS
         value: https://jfredmc.github.io
-      # Contraseña de los usuarios de ejemplo si se corre el seed (no se versiona).
+      # Siembra "salon-ejemplo" al arrancar si no existe (el plan Free no tiene Shell). Pon "false" para apagarlo.
+      - key: SEED_DEMO
+        value: 'true'
+      # Contraseña de los usuarios de ejemplo (no se versiona).
       - key: SEED_PASSWORD
         sync: false
