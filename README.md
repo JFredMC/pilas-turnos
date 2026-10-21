@@ -45,6 +45,13 @@ Los choques de horario se validan en el código y además en la base, con una re
 | `GET/POST/DELETE /salon/espera` | dueña y estilista | Lista de espera del salón. |
 | `GET /salon/caja?fecha`, `POST /salon/caja/cierre` | caja: ambas · cierre: dueña | Cuadre por estilista: ventas, comisión, propinas, efectivo y Nequi. |
 | `GET/DELETE /salon/clientas/:id` | dueña | Ley 1581: consultar o borrar los datos de una clienta. Sus citas quedan anónimas para no descuadrar la caja. |
+| `GET/PATCH /config/salon` | dueña | Nombre, slug (enlace), WhatsApp, abono sí/no y monto, número de Nequi. |
+| `GET/POST/PATCH/DELETE /config/servicios` | dueña | Servicios con precio (COP) y duración. Si un servicio tiene citas, borrarlo lo desactiva. |
+| `GET/POST/PATCH /config/estilistas`, `PUT /config/estilistas/:id/horario` | dueña | Estilistas (comisión %, activa) y horario semanal. |
+| `GET/POST/DELETE /config/excepciones` | dueña | Días libres, festivos de todo el salón u horario especial un día. |
+| `GET/POST/DELETE /config/usuarios`, `POST /config/usuarios/:id/restablecer` | dueña | Invitar estilistas con contraseña temporal (se debe cambiar al primer ingreso). |
+| `POST /auth/cambiar-password` | con sesión | Cambia la contraseña y emite un token nuevo. Los tokens anteriores dejan de servir. |
+| `POST /auth/recuperar`, `POST /auth/restablecer` | público, límite de ritmo | Recuperación por correo: enlace de un solo uso, válido 1 hora (se guarda solo el hash). |
 
 **Seguridad:**
 - Validación con zod y mensajes de error en español.
@@ -88,6 +95,10 @@ El seed local crea `duena@salon-ejemplo.ejemplo.co` y `yuli@salon-ejemplo.ejempl
 - `pnpm --filter @pilas/api test`: usa `DATABASE_URL_TEST`, por defecto `postgres://pilas:pilas@localhost:5432/pilas_test`. Aplica las migraciones y vacía las tablas en cada archivo.
 
 **Migraciones:** se definen en `apps/api/src/db/schema.ts`. Con `pnpm --filter @pilas/api db:generate` se crea el SQL en `apps/api/drizzle/`.
+
+### Correo (recuperación de contraseña)
+
+Con `MAIL_PROVIDER=ses`, la API envía con Amazon SES usando `SES_AWS_REGION`, `SES_FROM_EMAIL` y las credenciales AWS estándar (`AWS_ACCESS_KEY_ID` y `AWS_SECRET_ACCESS_KEY`). Sin eso, en desarrollo el correo con el enlace se escribe en el log de la API. En producción solo queda un aviso, sin el enlace.
 
 ## Despliegue
 
