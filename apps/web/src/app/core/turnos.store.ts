@@ -39,11 +39,17 @@ export class TurnosStore {
   readonly espera = signal<Espera[]>(this.conApi ? [] : structuredClone(ESPERA_EJEMPLO));
   readonly error = signal<string | null>(null);
   readonly sesion = signal<{ nombre: string; rol: 'duena' | 'estilista' } | null>(null);
+  /** Día que se ve en la agenda y en la caja (AAAA-MM-DD, hora de Colombia). */
+  readonly fecha = signal(hoy());
+  readonly hoy = hoy;
+  readonly esHoy = computed(() => this.fecha() === hoy());
+  /** Sin API, los datos de ejemplo son solo de hoy. */
+  readonly citasDelDia = computed(() => (this.conApi || this.esHoy() ? this.citas() : []));
   private readonly cuadreApi = signal<CuadreEstilista[]>([]);
   readonly cuadre = computed(() =>
     this.conApi
       ? this.cuadreApi()
-      : cuadrePorEstilista(this.citas(), this.servicios(), this.estilistas()),
+      : cuadrePorEstilista(this.citasDelDia(), this.servicios(), this.estilistas()),
   );
 
   servicio(id: string) {
@@ -255,7 +261,7 @@ export class TurnosStore {
         }>('GET', '/salon'),
         api.pedir<{
           citas: (Cita & { estado: string; clienta: string; telefono: string | null })[];
-        }>('GET', `/salon/agenda?fecha=${hoy()}`),
+        }>('GET', `/salon/agenda?fecha=${this.fecha()}`),
         api.pedir<
           {
             id: string;
@@ -288,7 +294,7 @@ export class TurnosStore {
           nombre: string;
           comisionPct: number;
         })[];
-      }>('GET', `/salon/caja?fecha=${hoy()}`),
+      }>('GET', `/salon/caja?fecha=${this.fecha()}`),
     );
     if (r)
       this.cuadreApi.set(

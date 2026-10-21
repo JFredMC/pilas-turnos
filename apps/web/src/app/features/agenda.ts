@@ -1,3 +1,4 @@
+import { SelectorFecha } from './selector-fecha';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TurnosStore } from '../core/turnos.store';
 import { formatoCop } from '../core/calculos';
@@ -5,8 +6,13 @@ import { EstadoCita } from '../core/modelos';
 
 @Component({
   selector: 'app-agenda',
+  imports: [SelectorFecha],
   template: `
-    <h1>Agenda de hoy</h1>
+    <h1>Agenda</h1>
+    <app-selector-fecha (cambio)="store.cargarSalon()" />
+    @if (!store.conApi && !store.esHoy()) {
+      <p class="aviso" role="note">Los datos de ejemplo son solo de hoy.</p>
+    }
     @if (store.error()) {
       <p class="aviso" role="alert">{{ store.error() }}</p>
     }
@@ -93,7 +99,7 @@ export class Agenda implements OnInit {
       .filter((e) => this.filtro() === 'todas' || this.filtro() === e.id)
       .map((e) => ({
         estilista: e,
-        citas: this.store.citas().filter((c) => c.estilistaId === e.id),
+        citas: this.store.citasDelDia().filter((c) => c.estilistaId === e.id),
       })),
   );
   cambiar(id: string, estado: EstadoCita) {
